@@ -26,7 +26,10 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../front/public/index.html'));
 });
 app.get('/login', (req, res) => {
-    res.sendFile(path.join(__dirname, '../front/views/login.html')); 
+    res.sendFile(path.join(__dirname, '../front/views/login')); 
+});
+app.get('/registro', (req, res) => {
+    res.render('registro'); 
 });
 
 const PORT = process.env.PORT || 3000;
