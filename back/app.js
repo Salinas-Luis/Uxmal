@@ -31,7 +31,42 @@ app.get('/login', (req, res) => {
 app.get('/registro', (req, res) => {
     res.render('registro'); 
 });
+app.get('/clase/:id', async (req, res) => {
+    const claseId = req.params.id;
+    const user = req.session.user; 
 
+    const { data: clase } = await supabase.from('clases').select('*').eq('id', claseId).single();
+    
+    const { data: posts } = await supabase
+        .from('anuncios')
+        .select(`*, usuarios(nombre, apellido)`)
+        .eq('clase_id', claseId)
+        .order('fecha_creacion', { ascending: false });
+
+    const postsFormateados = posts.map(p => ({
+        ...p,
+        autor_nombre: `${p.usuarios.nombre} ${p.usuarios.apellido}`
+    }));
+
+    res.render('clase', { 
+        clase, 
+        posts: postsFormateados, 
+        user 
+    });
+});
+app.get('/clase/:id/tareas', async (req, res) => {
+    const claseId = req.params.id;
+    const user = req.session.user;
+    const { data: clase } = await supabase.from('clases').select('*').eq('id', claseId).single();
+    
+    const { data: tareas } = await supabase
+        .from('tareas')
+        .select('*')
+        .eq('clase_id', claseId)
+        .order('fecha_creacion', { ascending: false });
+
+    res.render('tareas', { clase, tareas: tareas || [], user });
+});
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(` Uxmal corriendo en http://localhost:${PORT}`);

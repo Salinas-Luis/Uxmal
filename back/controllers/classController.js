@@ -4,11 +4,12 @@ exports.createClass = async (req, res) => {
     try {
         const { nombre_clase, seccion, materia, profesor_id } = req.body;
         
-        const { data: nuevaClase, error: errorClase } = await ClassModel.create({ 
-            nombre_clase, seccion, materia, profesor_id 
-        });
-        
-        if (errorClase) return res.status(400).json({ error: errorClase.message });
+        const { data: nuevaClase, error } = await supabase
+            .from('clases')
+            .insert([{ nombre_clase, seccion, materia, profesor_id }])
+            .select();
+
+        if (error) throw error;
 
         await supabase
             .from('inscripciones')
@@ -18,9 +19,9 @@ exports.createClass = async (req, res) => {
                 rol_en_clase: 'profesor' 
             }]);
 
-        res.status(201).json({ message: "Clase creada", clase: nuevaClase[0] });
+        res.status(201).json(nuevaClase[0]);
     } catch (err) {
-        res.status(500).json({ error: "Error al crear clase" });
+        res.status(400).json({ error: err.message });
     }
 };
 
