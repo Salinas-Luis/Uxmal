@@ -1,6 +1,4 @@
-const AssignmentModel = require('../model/assignmentModel');
-
-const AssignmentModel = require('../model/assignmentModel');
+const AssignmentModel = require('../model/assigmentModel');
 const supabase = require('../config/db');
 
 exports.createAssignment = async (req, res) => {

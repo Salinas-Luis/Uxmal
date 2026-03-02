@@ -4,7 +4,7 @@ require('dotenv').config();
 
 const userRoutes = require('./routes/userRoutes');
 const classRoutes = require('./routes/classRoutes');
-const assignmentRoutes = require('./routes/assignmentRoutes');
+const assignmentRoutes = require('./routes/assigmentRoutes');
 const postRoutes = require('./routes/postRoutes');
 const path = require('path');
 

@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const assignmentController = require('../controllers/assignmentController');
+const assignmentController = require('../controllers/assigmentController');
 const upload = require('../config/multer'); 
 
 router.get('/class/:claseId', assignmentController.getAssignmentsByClass);
