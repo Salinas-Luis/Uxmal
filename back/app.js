@@ -113,6 +113,9 @@ app.get('/tarea/:id/revision', async (req, res) => {
 
     res.render('ver_entregas', { tarea, alumnos: alumnosConEstado });
 });
+app.get('/perfil', (req, res) => {
+    res.render('perfil', { user: req.session.user });
+});
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(` Uxmal corriendo en http://localhost:${PORT}`);
