@@ -67,6 +67,52 @@ app.get('/clase/:id/tareas', async (req, res) => {
 
     res.render('tareas', { clase, tareas: tareas || [], user });
 });
+app.get('/tarea/:id', async (req, res) => {
+    const tareaId = req.params.id;
+    const userId = req.session.user.id;
+
+    const { data: tarea } = await supabase
+        .from('tareas')
+        .select('*, clases(nombre_clase, profesor_id)')
+        .eq('id', tareaId)
+        .single();
+
+    const { data: entrega } = await supabase
+        .from('entregas')
+        .select('*')
+        .eq('tarea_id', tareaId)
+        .eq('estudiante_id', userId)
+        .single();
+
+    res.render('detalle_tarea', { tarea, entrega, user: req.session.user });
+});
+app.get('/tarea/:id/revision', async (req, res) => {
+    const tareaId = req.params.id;
+
+    const { data: tarea } = await supabase.from('tareas').select('*').eq('id', tareaId).single();
+
+    const { data: inscritos } = await supabase
+        .from('inscripciones')
+        .select('usuarios(*)')
+        .eq('clase_id', tarea.clase_id)
+        .eq('rol_en_clase', 'estudiante');
+
+    const { data: entregas } = await supabase
+        .from('entregas')
+        .select('*')
+        .eq('tarea_id', tareaId);
+
+    const alumnosConEstado = inscritos.map(ins => {
+        const entrega = entregas.find(e => e.estudiante_id === ins.usuarios.id);
+        return {
+            ...ins.usuarios,
+            entrega: entrega || null,
+            puntos_maximos_tarea: tarea.puntos_maximos
+        };
+    });
+
+    res.render('ver_entregas', { tarea, alumnos: alumnosConEstado });
+});
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(` Uxmal corriendo en http://localhost:${PORT}`);
