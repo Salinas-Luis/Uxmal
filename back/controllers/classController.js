@@ -41,16 +41,33 @@ exports.createClass = async (req, res) => {
 
 exports.joinClass = async (req, res) => {
     try {
-        const { codigo_acceso, estudiante_id } = req.body;
-        const { data: clase, error: errClase } = await ClassModel.findByCode(codigo_acceso);
-        
-        if (!clase) return res.status(404).json({ error: "Código de clase no válido" });
+        const { codigo_acceso } = req.body;
+        const usuario_id = req.session.user.id;
 
-        const { data, error } = await ClassModel.join(clase.id, estudiante_id);
-        if (error) return res.status(400).json({ error: "Ya estás inscrito en esta clase" });
+        const { data: clase, error: claseError } = await supabase
+            .from('clases')
+            .select('id')
+            .eq('codigo_acceso', codigo_acceso)
+            .single();
 
-        res.json({ message: "Te has unido a la clase", clase });
+        if (claseError || !clase) {
+            return res.status(404).json({ error: "Código de clase no encontrado" });
+        }
+
+        const { error: joinError } = await supabase
+            .from('inscripciones') 
+            .insert([{ 
+                clase_id: clase.id, 
+                estudiante_id: usuario_id, 
+                rol_en_clase: 'estudiante' 
+            }]);
+
+        if (joinError) throw joinError;
+
+        res.status(200).json({ message: "¡Unido con éxito!" });
+
     } catch (err) {
-        res.status(500).json({ error: "Error al unirse" });
+        console.error("Error al unirse:", err);
+        res.status(500).json({ error: "No se pudo completar la unión a la clase" });
     }
 };

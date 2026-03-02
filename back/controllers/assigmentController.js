@@ -16,7 +16,7 @@ exports.createAssignment = async (req, res) => {
             if (uploadError) throw uploadError;
 
             const { data: publicUrl } = supabase.storage
-                .from('materiales_tareas')
+                .from('material-clases')
                 .getPublicUrl(fileName);
             fileUrl = publicUrl.publicUrl;
         }
