@@ -46,7 +46,7 @@
                 <div class="card border-0 shadow-sm mb-4 p-3">
                     <div class="d-flex align-items-center mb-3">
                         <div class="bg-primary text-white rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                            <%= user.nombre.charAt(0) %>
+                            <%= (user && user.nombre) ? user.nombre.charAt(0).toUpperCase() : 'U' %>
                         </div>
                         <button class="btn btn-outline-secondary w-100 text-start rounded-pill py-2" data-bs-toggle="collapse" data-bs-target="#postForm">
                             Anuncia algo a tu clase...
@@ -78,7 +78,7 @@
                                         </div>
                                         <div>
                                             <h6 class="mb-0 fw-bold"><%= post.autor_nombre %></h6>
-                                            <small class="text-muted"><%= new Date(post.fecha_creacion).toLocaleDateString() %></small>
+                                            <small class="text-muted"><%= new Date(post.fecha_publicacion).toLocaleDateString() %></small>
                                         </div>
                                     </div>
                                     <p class="card-text"><%= post.contenido %></p>

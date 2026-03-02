@@ -1,4 +1,5 @@
 const UserModel = require('../model/userModel');
+const supabase = require('../config/db'); 
 
 exports.register = async (req, res) => {
     try {
@@ -18,25 +19,36 @@ exports.register = async (req, res) => {
 };
 
 exports.login = async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        const { data: user, error } = await UserModel.findByEmail(email);
+    const { email, password } = req.body;
 
-        if (error || !user || user.password !== password) {
+    try {
+        const { data: usuario, error } = await supabase
+            .from('usuarios')
+            .select('*')
+            .eq('email', email)
+            .single();
+
+        if (error || !usuario || usuario.password !== password) { 
             return res.status(401).json({ error: "Credenciales incorrectas" });
         }
 
-        res.json({ 
-            message: "Bienvenido a MaxGrade", 
-            user: {
-                id: user.id,
-                nombre: user.nombre,
-                apellido: user.apellido,
-                email: user.email,
-                avatar_url: user.avatar_url
-            } 
+        req.session.user = {
+            id: usuario.id,
+            nombre: usuario.nombre,
+            apellido: usuario.apellido,
+            email: usuario.email,
+        };
+
+        req.session.save((err) => {
+            if (err) {
+                console.error("Error al guardar sesión:", err);
+                return res.status(500).json({ error: "Error al crear la sesión" });
+            }
+            res.status(200).json({ message: "Login exitoso", user: req.session.user });
         });
+
     } catch (err) {
-        res.status(500).json({ error: "Error en el servidor al iniciar sesión" });
+        console.error("Error en el catch de login:", err);
+        res.status(500).json({ error: "Error interno del servidor" });
     }
 };

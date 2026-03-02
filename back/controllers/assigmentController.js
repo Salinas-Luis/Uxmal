@@ -3,42 +3,41 @@ const supabase = require('../config/db');
 
 exports.createAssignment = async (req, res) => {
     try {
-        const { clase_id, titulo, instrucciones, puntos_maximos, fecha_entrega } = req.body;
-        let archivoUrl = null;
+        const { titulo, descripcion, puntos_maximos, fecha_entrega, clase_id } = req.body;
+        const file = req.file; 
+        let fileUrl = null;
 
-        if (req.file) {
-            const file = req.file;
+        if (file) {
             const fileName = `${Date.now()}_${file.originalname}`;
-            
-            const { data, error } = await supabase.storage
-                .from('material-clases')
-                .upload(fileName, file.buffer, {
-                    contentType: file.mimetype,
-                    upsert: false
-                });
+            const { data, error: uploadError } = await supabase.storage
+                .from('material-clases') 
+                .upload(fileName, file.buffer, { contentType: file.mimetype });
 
-            if (error) throw error;
+            if (uploadError) throw uploadError;
 
             const { data: publicUrl } = supabase.storage
-                .from('material-clases')
+                .from('materiales_tareas')
                 .getPublicUrl(fileName);
-            
-            archivoUrl = publicUrl.publicUrl;
+            fileUrl = publicUrl.publicUrl;
         }
 
-        const { data, error } = await AssignmentModel.create({
-            clase_id,
-            titulo,
-            instrucciones,
-            puntos_maximos,
-            fecha_entrega,
-            archivo_guia_url: archivoUrl
-        });
+        const { error: dbError } = await supabase
+            .from('tareas') 
+            .insert([{
+                titulo,
+                descripcion,
+                puntos_maximos: parseInt(puntos_maximos),
+                fecha_entrega,
+                clase_id,
+                archivo_guia_url: fileUrl 
+            }]);
 
-        if (error) return res.status(400).json({ error: error.message });
-        res.status(201).json(data[0]);
+        if (dbError) throw dbError;
+
+        res.status(201).json({ message: "Tarea creada correctamente" });
     } catch (err) {
-        res.status(500).json({ error: "Error al crear tarea con archivo" });
+        console.error("ERROR CRÍTICO:", err);
+        res.status(500).json({ error: "No se pudo crear la tarea en el servidor" });
     }
 };
 

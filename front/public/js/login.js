@@ -21,12 +21,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 
         if (response.ok) {
             localStorage.setItem('user', JSON.stringify(result.user));
-            
-            if (result.user.rol === 'profesor') {
-                window.location.href = '/dashboard-profe';
-            } else {
-                window.location.href = '/dashboard-alumno';
-            }
+            window.location.href = '/dashboard';
         } else {
             errorDiv.textContent = result.error || "Error al iniciar sesión";
             errorDiv.classList.remove('d-none');
@@ -39,3 +34,21 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
         btn.innerText = "Ingresar";
     }
 });
+async function loginUser(event) {
+    event.preventDefault();
+
+    const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+    });
+
+    const result = await response.json();
+
+    if (response.ok) {
+        localStorage.setItem('user', JSON.stringify(result.user));
+        window.location.href = '/dashboard';
+    } else {
+        alert(result.error);
+    }
+}

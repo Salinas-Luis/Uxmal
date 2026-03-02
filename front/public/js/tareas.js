@@ -1,26 +1,37 @@
 async function publishAssignment(claseId) {
-    const formData = new FormData();
+    const title = document.getElementById('taskTitle').value;
+    const instructions = document.getElementById('taskInstructions').value;
+    const points = document.getElementById('taskPoints').value;
+    const dueDate = document.getElementById('taskDueDate').value;
     const fileInput = document.getElementById('taskFile');
 
+    if (!title) return alert("El título es obligatorio");
+
+    const formData = new FormData();
+    formData.append('titulo', title);
+    formData.append('descripcion', instructions);
+    formData.append('puntos_maximos', points);
+    formData.append('fecha_entrega', dueDate);
     formData.append('clase_id', claseId);
-    formData.append('titulo', document.getElementById('taskTitle').value);
-    formData.append('instrucciones', document.getElementById('taskInstructions').value);
-    formData.append('puntos_maximos', document.getElementById('taskPoints').value);
-    formData.append('fecha_entrega', document.getElementById('taskDueDate').value);
     
     if (fileInput.files[0]) {
         formData.append('archivo_guia', fileInput.files[0]);
     }
 
     try {
-        const response = await fetch('http://localhost:3000/api/assignments', {
+        const response = await fetch('/api/assignments', {
             method: 'POST',
             body: formData 
         });
 
-        if (response.ok) location.reload();
-        else alert("Error al subir tarea");
-    } catch (error) {
-        console.error(error);
+        if (response.ok) {
+            location.reload();
+        } else {
+            const errorData = await response.json();
+            alert("Error: " + (errorData.error || "No se pudo subir la tarea"));
+        }
+    } catch (err) {
+        console.error("Error en la petición:", err);
+        alert("Error de conexión con el servidor");
     }
 }

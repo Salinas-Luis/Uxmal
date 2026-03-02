@@ -24,3 +24,21 @@ async function createPost(claseId) {
         console.error("Error:", error);
     }
 }
+document.getElementById('btnPublicarAnuncio').addEventListener('click', async () => {
+    const contenido = document.getElementById('textoAnuncio').value;
+    const claseId = window.location.pathname.split('/').pop();
+
+    if (!contenido.trim()) return alert("Escribe algo antes de publicar");
+
+    const response = await fetch('/api/posts/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ contenido, clase_id: claseId })
+    });
+
+    if (response.ok) {
+        location.reload(); 
+    } else {
+        alert("Error al publicar");
+    }
+});

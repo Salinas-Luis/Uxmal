@@ -1,0 +1,13 @@
+<h2>Profesores</h2>
+<ul>
+    <% profesores.forEach(p => { %>
+        <li><%= p.usuarios.nombre %> <%= p.usuarios.apellido %></li>
+    <% }) %>
+</ul>
+
+<h2>Alumnos</h2>
+<ul>
+    <% alumnos.forEach(a => { %>
+        <li><%= a.usuarios.nombre %> <%= a.usuarios.apellido %></li>
+    <% }) %>
+</ul>
