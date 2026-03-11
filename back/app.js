@@ -227,7 +227,16 @@ app.get('/clase/:id/personas', async (req, res) => {
 app.get('/perfil', (req, res) => {
     res.render('perfil', { user: req.session?.user || {} });
 });
-
+app.get('/logout', (req, res) => {
+    req.session.destroy((err) => {
+        if (err) {
+            console.error("Error al cerrar sesión:", err);
+            return res.redirect('/dashboard');
+        }
+        res.clearCookie('connect.sid');
+        res.redirect('/login'); 
+    });
+});
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`Uxmal corriendo en http://localhost:${PORT}`);
