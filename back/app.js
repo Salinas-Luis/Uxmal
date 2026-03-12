@@ -17,7 +17,7 @@ app.use(cors());
 app.use(express.json()); 
 app.use(session({
     secret: 'keyboard cat', 
-    resave: false,
+    resave: true,
     saveUninitialized: false,
     cookie: { 
         secure: true, 
