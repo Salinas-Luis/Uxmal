@@ -10,11 +10,14 @@ const classRoutes = require('./routes/classRoutes');
 const assignmentRoutes = require('./routes/assigmentRoutes'); 
 const postRoutes = require('./routes/postRoutes');
 const session = require('express-session');
+const cookieParser = require('cookie-parser');
+const { authenticateToken } = require('./middleware/authMiddleware');
 
 const app = express();
 
 app.use(cors());
-app.use(express.json()); 
+app.use(express.json());
+app.use(cookieParser());
 app.use(session({
     secret: 'keyboard cat', 
     resave: false,
@@ -48,9 +51,10 @@ app.get('/registro', (req, res) => {
     res.render('register'); 
 });
 
-app.get('/dashboard', async (req, res) => {
+app.get('/dashboard', authenticateToken, async (req, res) => {
     try {
-        const user = req.session?.user;
+        // Obtener usuario del token JWT o de la sesión (para compatibilidad)
+        const user = req.user || req.session?.user;
 
         if (!user) {
             return res.redirect('/login'); 
@@ -81,16 +85,16 @@ app.get('/dashboard', async (req, res) => {
     } catch (error) {
         console.error("Error en Dashboard:", error);
         res.render('dashboard', { 
-            user: req.session?.user || {}, 
+            user: req.user || req.session?.user || {}, 
             clases: [] 
         });
     }
 });
 
-app.get('/clase/:id', async (req, res) => {
+app.get('/clase/:id', authenticateToken, async (req, res) => {
     try {
         const claseId = req.params.id;
-        const user = req.session?.user || {}; 
+        const user = req.user || req.session?.user || {}; 
 
         const { data: clase } = await supabase.from('clases').select('*').eq('id', claseId).single();
         
@@ -111,10 +115,10 @@ app.get('/clase/:id', async (req, res) => {
     }
 });
 
-app.get('/clase/:id/tareas', async (req, res) => {
+app.get('/clase/:id/tareas', authenticateToken, async (req, res) => {
     try {
         const claseId = req.params.id;
-        const user = req.session?.user || {};
+        const user = req.user || req.session?.user || {};
         const { data: clase } = await supabase.from('clases').select('*').eq('id', claseId).single();
         
         const { data: tareas } = await supabase
@@ -129,10 +133,10 @@ app.get('/clase/:id/tareas', async (req, res) => {
     }
 });
 
-app.get('/tarea/:id', async (req, res) => {
+app.get('/tarea/:id', authenticateToken, async (req, res) => {
     try {
         const tareaId = req.params.id;
-        const user = req.session?.user || { id: null };
+        const user = req.user || req.session?.user || { id: null };
 
         const { data: tarea } = await supabase
             .from('tareas')
@@ -153,7 +157,7 @@ app.get('/tarea/:id', async (req, res) => {
     }
 });
 
-app.get('/tarea/:id/revision', async (req, res) => {
+app.get('/tarea/:id/revision', authenticateToken, async (req, res) => {
     try {
         const tareaId = req.params.id;
         const { data: tarea } = await supabase.from('tareas').select('*').eq('id', tareaId).single();
@@ -183,10 +187,10 @@ app.get('/tarea/:id/revision', async (req, res) => {
         res.status(500).send("Error en la revisión");
     }
 });
-app.get('/clase/:id/personas', async (req, res) => {
+app.get('/clase/:id/personas', authenticateToken, async (req, res) => {
     try {
         const claseId = req.params.id;
-        const user = req.session?.user || {};
+        const user = req.user || req.session?.user || {};
 
         const { data: clase } = await supabase
             .from('clases')
@@ -224,8 +228,8 @@ app.get('/clase/:id/personas', async (req, res) => {
         res.status(500).send("Error al cargar la lista de personas");
     }
 });
-app.get('/perfil', (req, res) => {
-    res.render('perfil', { user: req.session?.user || {} });
+app.get('/perfil', authenticateToken, (req, res) => {
+    res.render('perfil', { user: req.user || req.session?.user || {} });
 });
 app.get('/logout', (req, res) => {
     req.session.destroy((err) => {

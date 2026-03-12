@@ -1,5 +1,6 @@
 const UserModel = require('../model/userModel');
-const supabase = require('../config/db'); 
+const supabase = require('../config/db');
+const jwt = require('jsonwebtoken');
 
 exports.register = async (req, res) => {
     try {
@@ -32,19 +33,33 @@ exports.login = async (req, res) => {
             return res.status(401).json({ error: "Credenciales incorrectas" });
         }
 
-        req.session.user = {
+        const userData = {
             id: usuario.id,
             nombre: usuario.nombre,
             apellido: usuario.apellido,
             email: usuario.email,
         };
 
+        // Crear JWT
+        const token = jwt.sign(userData, process.env.JWT_SECRET || 'tu_clave_secreta', {
+            expiresIn: '24h'
+        });
+
+        // Guardar token en cookie
+        res.cookie('token', token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            maxAge: 24 * 60 * 60 * 1000 // 24 horas
+        });
+
+        // También guardar en sesión para compatibilidad
+        req.session.user = userData;
+
         req.session.save((err) => {
             if (err) {
                 console.error("Error al guardar sesión:", err);
-                return res.status(500).json({ error: "Error al crear la sesión" });
             }
-            res.status(200).json({ message: "Login exitoso", user: req.session.user });
+            res.status(200).json({ message: "Login exitoso", user: userData });
         });
 
     } catch (err) {
