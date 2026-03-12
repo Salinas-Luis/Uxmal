@@ -21,7 +21,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 
         if (response.ok) {
             localStorage.setItem('user', JSON.stringify(result.user));
-            window.location.href = '/dashboard';
+            window.location.href = 'https://uxmal-6t33.vercel.app/dashboard';
         } else {
             errorDiv.textContent = result.error || "Error al iniciar sesión";
             errorDiv.classList.remove('d-none');
@@ -47,7 +47,7 @@ async function loginUser(event) {
 
     if (response.ok) {
         localStorage.setItem('user', JSON.stringify(result.user));
-        window.location.href = '/dashboard';
+        window.location.href = 'https://uxmal-6t33.vercel.app/dashboard';
     } else {
         alert(result.error);
     }

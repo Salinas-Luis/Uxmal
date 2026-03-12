@@ -27,7 +27,7 @@ document.getElementById('registerForm').addEventListener('submit', async (e) => 
         if (response.ok) {
             successDiv.classList.remove('d-none');
             setTimeout(() => {
-                window.location.href = '/login';
+                window.location.href = 'https://uxmal-6t33.vercel.app/login';
             }, 1500);
         } else {
             errorDiv.textContent = result.error || "Error al registrar el usuario";
