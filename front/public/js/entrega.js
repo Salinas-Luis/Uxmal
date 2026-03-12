@@ -16,7 +16,7 @@ async function submitWork(tareaId) {
     formData.append('archivo_entrega', fileInput.files[0]);
 
     try {
-        const response = await fetch('/api/submissions', {
+        const response = await fetch('https://uxmal-6t33.vercel.app/api/submissions', {
             method: 'POST',
             body: formData
         });

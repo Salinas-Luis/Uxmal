@@ -9,7 +9,7 @@ async function createClass() {
     if (!nombre_clase) return alert("El nombre de la clase es obligatorio");
 
     try {
-        const response = await fetch('http://localhost:3000/api/classes/create', {
+        const response = await fetch('https://uxmal-6t33.vercel.app/api/classes/create', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
@@ -38,7 +38,7 @@ async function joinClass() {
     if (!codigo_acceso) return alert("Introduce un código");
 
     try {
-        const response = await fetch('http://localhost:3000/api/classes/join', {
+        const response = await fetch('https://uxmal-6t33.vercel.app/api/classes/join', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 

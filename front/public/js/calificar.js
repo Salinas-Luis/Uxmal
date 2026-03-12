@@ -35,7 +35,7 @@ async function guardarNota(entregaId) {
     const calificacion = document.getElementById('notaInput').value;
 
     try {
-        const response = await fetch(`/api/submissions/grade/${entregaId}`, {
+        const response = await fetch(`https://uxmal-6t33.vercel.app/api/submissions/grade/${entregaId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ calificacion })

@@ -5,7 +5,7 @@ async function createPost(claseId) {
     if (!contenido) return alert("El mensaje no puede estar vacío");
 
     try {
-        const response = await fetch('http://localhost:3000/api/posts', {
+        const response = await fetch('https://uxmal-6t33.vercel.app/api/posts', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -30,7 +30,7 @@ document.getElementById('btnPublicarAnuncio').addEventListener('click', async ()
 
     if (!contenido.trim()) return alert("Escribe algo antes de publicar");
 
-    const response = await fetch('/api/posts/create', {
+    const response = await fetch('https://uxmal-6t33.vercel.app/api/posts/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contenido, clase_id: claseId })

@@ -11,7 +11,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
     errorDiv.classList.add('d-none');
 
     try {
-        const response = await fetch('http://localhost:3000/api/auth/login', {
+        const response = await fetch('https://uxmal-6t33.vercel.app/api/auth/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password })
@@ -37,7 +37,7 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 async function loginUser(event) {
     event.preventDefault();
 
-    const response = await fetch('/api/auth/login', {
+    const response = await fetch('https://uxmal-6t33.vercel.app/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })

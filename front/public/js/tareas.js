@@ -19,7 +19,7 @@ async function publishAssignment(claseId) {
     }
 
     try {
-        const response = await fetch('/api/assignments', {
+        const response = await fetch('https://uxmal-6t33.vercel.app/api/assignments', {
             method: 'POST',
             body: formData 
         });

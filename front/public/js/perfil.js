@@ -10,7 +10,7 @@ async function updateAvatar() {
     formData.append('userId', user.id);
 
     try {
-        const response = await fetch('/api/user/update-avatar', {
+        const response = await fetch('https://uxmal-6t33.vercel.app/api/user/update-avatar', {
             method: 'POST',
             body: formData
         });
