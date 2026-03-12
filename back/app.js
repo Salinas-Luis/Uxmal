@@ -238,6 +238,6 @@ app.get('/logout', (req, res) => {
     });
 });
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-    console.log(`Uxmal corriendo en http://localhost:${PORT}`);
+app.listen("https://uxmal-6t33.vercel.app", () => {
+    console.log(`Uxmal corriendo en https://uxmal-6t33.vercel.app`);
 });

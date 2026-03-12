@@ -4,8 +4,8 @@ require('dotenv').config({ path: path.join(__dirname, '../.env') });
 
 const { createClient } = require('@supabase/supabase-js');
 
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_KEY;
+const supabaseUrl = "https://lndmtvqporbhnxojcbhr.supabase.co";
+const supabaseKey = "sb_publishable_hE93GPxU7DA5UBBtOLPjPA_FJa-FizH";
 
 if (!supabaseUrl || !supabaseKey) {
     console.error("Error al cargar las llaves ");
