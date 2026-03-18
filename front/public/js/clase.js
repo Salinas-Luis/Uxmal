@@ -30,7 +30,7 @@ async function createPost(claseId) {
 
     if (!contenido.trim()) return alert("Escribe algo antes de publicar");
 
-    const response = await fetch('https://uxmal-6t33.vercel.app/api/posts/create', {
+    const response = await fetch('https://uxmal-6t33.vercel.app/api/posts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ contenido, clase_id: claseId })
