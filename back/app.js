@@ -135,7 +135,7 @@ app.get('/tarea/:id', authenticateToken, async (req, res) => {
 
         const { data: tarea } = await supabase
             .from('tareas')
-            .select('*, clases(nombre_clase, profesor_id), profesor:usuarios!profesor_id(nombre, apellido)')
+            .select('*, clases(nombre_clase, profesor:usuarios!profesor_id(nombre, apellido))')
             .eq('id', tareaId)
             .single();
 

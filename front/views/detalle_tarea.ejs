@@ -26,7 +26,7 @@
                     <div>
                         <h1 class="h3 mb-0"><%= tarea.titulo %></h1>
                         <p class="text-muted small mb-0">
-                            <%= tarea.profesor.nombre %> <%= tarea.profesor.apellido %> • <%= new Date(tarea.fecha_creacion).toLocaleDateString() %>
+                            <%= tarea.clases.profesor.nombre %> <%= tarea.clases.profesor.apellido %> • <%= new Date(tarea.fecha_creacion).toLocaleDateString() %>
                         </p>
                         <div class="d-flex justify-content-between border-bottom pb-2 mt-2">
                             <span class="fw-bold small"><%= tarea.puntos_maximos %> puntos&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;</span>
