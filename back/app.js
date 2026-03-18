@@ -9,6 +9,7 @@ const userRoutes = require('./routes/userRoutes');
 const classRoutes = require('./routes/classRoutes');
 const assignmentRoutes = require('./routes/assigmentRoutes'); 
 const postRoutes = require('./routes/postRoutes');
+const PostModel = require('./model/postModel');
 const session = require('express-session');
 const cookieParser = require('cookie-parser');
 const { authenticateToken } = require('./middleware/authMiddleware');
@@ -98,19 +99,13 @@ app.get('/clase/:id', authenticateToken, async (req, res) => {
 
         const { data: clase } = await supabase.from('clases').select('*').eq('id', claseId).single();
         
-        const { data: posts } = await supabase
-            .from('anuncios')
-            .select(`*, usuarios:autor_id(nombre, apellido)`) 
-            .eq('clase_id', claseId)
-            .order('fecha_publicacion', { ascending: false });
+        const { data: posts, error } = await PostModel.getByClass(claseId);
 
-        const postsFormateados = (posts || []).map(p => ({
-            ...p,
-            autor_nombre: p.usuarios ? `${p.usuarios.nombre} ${p.usuarios.apellido}` : 'Usuario'
-        }));
+        if (error) throw error;
 
-        res.render('clase', { clase, posts: postsFormateados, user });
+        res.render('clase', { clase, posts: posts || [], user });
     } catch (error) {
+        console.error("Error al cargar la clase:", error);
         res.status(500).send("Error al cargar la clase");
     }
 });
