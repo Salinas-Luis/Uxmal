@@ -91,6 +91,7 @@
                                     <div id="fileNameDisplay" class="small text-muted mt-2 text-center"></div>
                                 </div>
                                 <button type="button" class="btn btn-primary w-100 py-2" onclick="submitWork('<%= tarea.id %>')">Marcar como entregada</button>
+                            <button type="button" class="btn btn-outline-primary w-100 py-2 mt-2" onclick="submitWorkWithoutFile('<%= tarea.id %>')">Entregar sin archivo</button>
                             </form>
                         <% } %>
                     </div>

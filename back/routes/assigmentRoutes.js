@@ -9,4 +9,8 @@ router.delete('/:id', assignmentController.deleteAssignment);
 
 router.post('/', upload.single('archivo_guia'), assignmentController.createAssignment);
 
+router.post('/submit', upload.single('archivo_entrega'), assignmentController.submitSubmission);
+
+router.put('/grade/:id', assignmentController.gradeSubmission);
+
 module.exports = router;

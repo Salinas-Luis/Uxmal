@@ -8,15 +8,39 @@ async function submitWork(tareaId) {
     const fileInput = document.getElementById('submissionFile');
     const user = JSON.parse(localStorage.getItem('user'));
 
-    if (!fileInput.files[0]) return alert("Por favor, selecciona un archivo");
+    const formData = new FormData();
+    formData.append('tarea_id', tareaId);
+    formData.append('estudiante_id', user.id);
+    if (fileInput.files[0]) {
+        formData.append('archivo_entrega', fileInput.files[0]);
+    }
+
+    try {
+        const response = await fetch('/api/assignments/submit', {
+            method: 'POST',
+            body: formData
+        });
+
+        if (response.ok) {
+            alert("¡Tarea entregada con éxito!");
+            location.reload();
+        } else {
+            alert("Error al entregar la tarea");
+        }
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+async function submitWorkWithoutFile(tareaId) {
+    const user = JSON.parse(localStorage.getItem('user'));
 
     const formData = new FormData();
     formData.append('tarea_id', tareaId);
     formData.append('estudiante_id', user.id);
-    formData.append('archivo_entrega', fileInput.files[0]);
 
     try {
-        const response = await fetch('https://uxmal-6t33.vercel.app/api/submissions', {
+        const response = await fetch('/api/assignments/submit', {
             method: 'POST',
             body: formData
         });
