@@ -19,39 +19,32 @@ static async getByClass(claseId) {
         const [anunciosRes, tareasRes] = await Promise.all([
             supabase
                 .from('anuncios')
-                .select('*, usuarios(nombre, apellido, avatar_url)')
+                .select('*, autor:usuarios!autor_id(nombre, apellido, avatar_url)')
                 .eq('clase_id', claseId),
             
             supabase
                 .from('tareas')
-                .select('*, usuarios:creador_id(nombre, apellido, avatar_url)') 
+                .select('*, autor:usuarios!creador_id(nombre, apellido, avatar_url)')
                 .eq('clase_id', claseId)
         ]);
 
-        if (anunciosRes.error) throw anunciosRes.error;
-        if (tareasRes.error) throw tareasRes.error;
-
-        const anuncios = anunciosRes.data.map(a => ({ 
-            ...a, 
-            tipo: 'anuncio', 
-            fecha_orden: a.fecha_publicacion || a.created_at,
-            autor: a.usuarios 
+        const anuncios = (anunciosRes.data || []).map(a => ({
+            ...a,
+            tipo: 'anuncio',
+            fecha_orden: a.fecha_publicacion || a.created_at 
         }));
 
-        const tareas = tareasRes.data.map(t => ({ 
-            ...t, 
-            tipo: 'tarea', 
-            fecha_orden: t.fecha_creacion,
-            autor: t.usuarios 
+        const tareas = (tareasRes.data || []).map(t => ({
+            ...t,
+            tipo: 'tarea',
+            fecha_orden: t.fecha_creacion || t.created_at 
         }));
 
-        const feed = [...anuncios, ...tareas].sort((a, b) => 
-            new Date(b.fecha_orden) - new Date(a.fecha_orden)
-        );
-
-        return { data: feed, error: null };
+        return { 
+            data: [...anuncios, ...tareas].sort((a, b) => new Date(b.fecha_orden) - new Date(a.fecha_orden)), 
+            error: null 
+        };
     } catch (error) {
-        console.error("Error detallado en getByClass:", error);
         return { data: null, error };
     }
 }
