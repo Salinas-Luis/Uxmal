@@ -139,7 +139,6 @@ app.get('/tarea/:id', authenticateToken, async (req, res) => {
             .eq('id', tareaId)
             .single();
 
-        // Obtener rol del usuario en la clase
         const { data: rolData } = await supabase
             .from('inscripciones')
             .select('rol_en_clase')
@@ -153,14 +152,12 @@ app.get('/tarea/:id', authenticateToken, async (req, res) => {
         let entrega = null;
 
         if (rol === 'profesor') {
-            // Profesores ven todas las entregas
             const { data: allEntregas } = await supabase
                 .from('entregas')
                 .select('*, estudiante:usuarios(nombre, apellido)')
                 .eq('tarea_id', tareaId);
             entregas = allEntregas || [];
         } else {
-            // Estudiantes ven solo su entrega
             const { data: userEntrega } = await supabase
                 .from('entregas')
                 .select('*')

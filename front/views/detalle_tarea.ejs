@@ -65,9 +65,13 @@
                                     <div>
                                         <strong><%= entrega.estudiante.nombre %> <%= entrega.estudiante.apellido %></strong>
                                         <br>
-                                        <small class="text-muted">Entregado: <%= new Date(entrega.fecha_entrega).toLocaleDateString() %></small>
+                                        <small class="text-muted">Entregado: <%= new Date(entrega.fecha_envio || entrega.created_at).toLocaleDateString() %></small>
                                     </div>
-                                    <a href="<%= entrega.archivo_entrega_url %>" target="_blank" class="btn btn-sm btn-outline-primary">Ver</a>
+                                    <% if (entrega.archivo_entrega_url) { %>
+                                        <a href="<%= entrega.archivo_entrega_url %>" target="_blank" class="btn btn-sm btn-outline-primary">Ver</a>
+                                    <% } else { %>
+                                        <span class="text-muted small">Sin archivo</span>
+                                    <% } %>
                                 </div>
                             <% }); %>
                         <% } else { %>
