@@ -53,7 +53,6 @@ app.get('/registro', (req, res) => {
 
 app.get('/dashboard', authenticateToken, async (req, res) => {
     try {
-        // Obtener usuario del token JWT o de la sesión (para compatibilidad)
         const user = req.user || req.session?.user;
 
         if (!user) {
@@ -68,7 +67,8 @@ app.get('/dashboard', authenticateToken, async (req, res) => {
                     id,
                     nombre_clase,
                     seccion,
-                    codigo_acceso
+                    codigo_acceso,
+                    profesor:usuarios!profesor_id ( nombre, apellido )
                 )
             `)
             .eq('estudiante_id', user.id);
