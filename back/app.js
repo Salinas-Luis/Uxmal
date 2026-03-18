@@ -135,20 +135,45 @@ app.get('/tarea/:id', authenticateToken, async (req, res) => {
 
         const { data: tarea } = await supabase
             .from('tareas')
-            .select('*, clases(nombre_clase, profesor_id)')
+            .select('*, clases(nombre_clase, profesor_id), profesor:usuarios!profesor_id(nombre, apellido)')
             .eq('id', tareaId)
             .single();
 
-        const { data: entrega } = await supabase
-            .from('entregas')
-            .select('*')
-            .eq('tarea_id', tareaId)
+        // Obtener rol del usuario en la clase
+        const { data: rolData } = await supabase
+            .from('inscripciones')
+            .select('rol_en_clase')
+            .eq('clase_id', tarea.clase_id)
             .eq('estudiante_id', user.id)
             .single();
 
-        res.render('detalle_tarea', { tarea, entrega, user });
+        const rol = rolData ? rolData.rol_en_clase : 'estudiante';
+
+        let entregas = null;
+        let entrega = null;
+
+        if (rol === 'profesor') {
+            // Profesores ven todas las entregas
+            const { data: allEntregas } = await supabase
+                .from('entregas')
+                .select('*, estudiante:usuarios(nombre, apellido)')
+                .eq('tarea_id', tareaId);
+            entregas = allEntregas || [];
+        } else {
+            // Estudiantes ven solo su entrega
+            const { data: userEntrega } = await supabase
+                .from('entregas')
+                .select('*')
+                .eq('tarea_id', tareaId)
+                .eq('estudiante_id', user.id)
+                .single();
+            entrega = userEntrega;
+        }
+
+        res.render('detalle_tarea', { tarea, entrega, entregas, rol, user });
     } catch (error) {
-        res.status(500).send("Error al cargar detalle de tarea");
+        console.error("Error al cargar tarea:", error);
+        res.status(500).send("Error al cargar la tarea");
     }
 });
 
