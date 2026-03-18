@@ -97,7 +97,7 @@
                                         <% if (post.tipo === 'tarea') { %>
                                             <h5 class="mb-1 text-primary fw-bold"><%= post.titulo %></h5>
                                             <p class="text-muted mb-2"><%= post.descripcion %></p>
-                                            <a href="/clase/<%= clase.id %>/tareas/<%= post.id %>" class="btn btn-outline-primary btn-sm mt-2 rounded-pill">Ver tarea</a>
+                                            <a href="/tarea/<%= post.id %>" class="btn btn-outline-primary btn-sm mt-2 rounded-pill">Ver tarea</a>
                                         <% } else { %>
                                             <p class="card-text"><%= post.contenido %></p>
                                         <% } %>
