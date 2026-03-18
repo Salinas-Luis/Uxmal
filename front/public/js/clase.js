@@ -24,9 +24,9 @@ async function createPost(claseId) {
         console.error("Error:", error);
     }
 }
-document.getElementById('btnPublicarAnuncio').addEventListener('click', async () => {
-    const contenido = document.getElementById('textoAnuncio').value;
-    const claseId = window.location.pathname.split('/').pop();
+
+async function createPost(claseId) {
+    const contenido = document.getElementById('postContent').value; 
 
     if (!contenido.trim()) return alert("Escribe algo antes de publicar");
 
@@ -41,4 +41,4 @@ document.getElementById('btnPublicarAnuncio').addEventListener('click', async ()
     } else {
         alert("Error al publicar");
     }
-});
+}
