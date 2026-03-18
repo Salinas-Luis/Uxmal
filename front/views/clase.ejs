@@ -76,35 +76,28 @@
                                 <div class="card-body">
                                     <div class="d-flex align-items-center mb-3">
                                         <div class="rounded-circle me-3 d-flex align-items-center justify-content-center text-white" 
-                                             style="width: 40px; height: 40px; background-color: <%= post.tipo === 'tarea' ? '#1a73e8' : '#6c757d' %>;">
+                                            style="width: 40px; height: 40px; background-color: <%= post.tipo === 'tarea' ? '#1a73e8' : '#6c757d' %>;">
                                             <i class="fa-solid <%= post.tipo === 'tarea' ? 'fa-clipboard-list' : 'fa-bullhorn' %>"></i>
                                         </div>
+                                        
                                         <div>
                                             <h6 class="mb-0 fw-bold">
-                                                <%= post.usuarios ? post.usuarios.nombre : 'Usuario' %> 
+                                                <%= post.autor ? `${post.autor.nombre} ${post.autor.apellido}` : 'Usuario de MaxGrade' %>
                                                 <% if(post.tipo === 'tarea') { %> 
                                                     <span class="text-muted fw-normal">publicó una nueva tarea</span> 
                                                 <% } %>
                                             </h6>
                                             <small class="text-muted">
-                                                <%= post.fecha_orden ? new Date(post.fecha_orden).toLocaleDateString() : 'Reciente' %>
+                                                <%= new Date(post.fecha_orden).toLocaleDateString() %>
                                             </small>
                                         </div>
                                     </div>
 
-                                    <div class="ms-5 ps-2">
+                                    <div class="ms-5">
                                         <% if (post.tipo === 'tarea') { %>
                                             <h5 class="mb-1 text-primary fw-bold"><%= post.titulo %></h5>
                                             <p class="text-muted mb-2"><%= post.descripcion %></p>
-                                            
-                                            <% if(post.fecha_entrega) { %>
-                                                <div class="d-flex align-items-center small text-danger fw-bold">
-                                                    <i class="fa-regular fa-calendar-check me-1"></i>
-                                                    Fecha de entrega: <%= new Date(post.fecha_entrega).toLocaleDateString() %>
-                                                </div>
-                                            <% } %>
-                                            
-                                            <a href="/clase/<%= clase.id %>/tareas/<%= post.id %>" class="btn btn-outline-primary btn-sm mt-3 rounded-pill">Ver tarea</a>
+                                            <a href="/clase/<%= clase.id %>/tareas/<%= post.id %>" class="btn btn-outline-primary btn-sm mt-2 rounded-pill">Ver tarea</a>
                                         <% } else { %>
                                             <p class="card-text"><%= post.contenido %></p>
                                         <% } %>

@@ -2,29 +2,32 @@ const supabase = require('../config/db');
 
 class AssignmentModel {
 
-    static async create(assignmentData) {
+static async create(assignmentData) {
         const { data, error } = await supabase
             .from('tareas')
             .insert([
                 {
                     clase_id: assignmentData.clase_id,
                     titulo: assignmentData.titulo,
-                    instrucciones: assignmentData.instrucciones,
-                    puntos_maximos: assignmentData.puntos_maximos || 100,
+                    descripcion: assignmentData.descripcion, 
+                    puntos_maximos: assignmentData.puntos_maximos,
                     fecha_entrega: assignmentData.fecha_entrega,
-                    archivo_guia_url: assignmentData.archivo_guia_url 
+                    creador_id: assignmentData.creador_id, 
+                    archivo_guia_url: assignmentData.archivo_guia_url,
+                    fecha_creacion: new Date()
                 }
             ])
             .select();
         
         return { data, error };
     }
+
     static async getByClass(claseId) {
         const { data, error } = await supabase
-            .from('anuncios')
+            .from('tareas')
             .select(`
                 *,
-                usuarios (nombre, apellido, avatar_url) -- Trae datos del autor siempre
+                usuarios:creador_id (nombre, apellido, avatar_url)
             `)
             .eq('clase_id', claseId);
         return { data, error };

@@ -14,46 +14,47 @@ static async create(postData) {
         return { data, error };
     }
 
-    static async getByClass(claseId) {
-        try {
-            const [anunciosRes, tareasRes] = await Promise.all([
-                supabase
-                    .from('anuncios')
-                    .select('*, usuarios(nombre, apellido, avatar_url)')
-                    .eq('clase_id', claseId),
-                supabase
-                    .from('tareas')
-                    .select('*, usuarios!creador_id(nombre, apellido, avatar_url)') 
-                    .eq('clase_id', claseId)
-            ]);
-            console.log("Anuncios recuperados:", anuncios.length);
-console.log("Tareas recuperadas:", tareas.length);
-console.log("Contenido del feed combinado:", feed);
-            if (anunciosRes.error) throw anunciosRes.error;
-            if (tareasRes.error) throw tareasRes.error;
+static async getByClass(claseId) {
+    try {
+        const [anunciosRes, tareasRes] = await Promise.all([
+            supabase
+                .from('anuncios')
+                .select('*, usuarios(nombre, apellido, avatar_url)')
+                .eq('clase_id', claseId),
+            
+            supabase
+                .from('tareas')
+                .select('*, usuarios:creador_id(nombre, apellido, avatar_url)') 
+                .eq('clase_id', claseId)
+        ]);
 
-            const anuncios = anunciosRes.data.map(a => ({ 
-                ...a, 
-                tipo: 'anuncio', 
-                fecha_orden: a.fecha_publicacion || a.created_at 
-            }));
+        if (anunciosRes.error) throw anunciosRes.error;
+        if (tareasRes.error) throw tareasRes.error;
 
-            const tareas = tareasRes.data.map(t => ({ 
-                ...t, 
-                tipo: 'tarea', 
-                fecha_orden: t.fecha_creacion 
-            }));
+        const anuncios = anunciosRes.data.map(a => ({ 
+            ...a, 
+            tipo: 'anuncio', 
+            fecha_orden: a.fecha_publicacion || a.created_at,
+            autor: a.usuarios 
+        }));
 
-            const feed = [...anuncios, ...tareas].sort((a, b) => 
-                new Date(b.fecha_orden) - new Date(a.fecha_orden)
-            );
+        const tareas = tareasRes.data.map(t => ({ 
+            ...t, 
+            tipo: 'tarea', 
+            fecha_orden: t.fecha_creacion,
+            autor: t.usuarios 
+        }));
 
-            return { data: feed, error: null };
-        } catch (error) {
-            console.error("Error en getByClass:", error);
-            return { data: null, error };
-        }
+        const feed = [...anuncios, ...tareas].sort((a, b) => 
+            new Date(b.fecha_orden) - new Date(a.fecha_orden)
+        );
+
+        return { data: feed, error: null };
+    } catch (error) {
+        console.error("Error detallado en getByClass:", error);
+        return { data: null, error };
     }
+}
 }
 
 module.exports = PostModel;
