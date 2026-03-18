@@ -25,7 +25,10 @@ function verDetalleEntrega(alumnoStr) {
             <h6 class="fw-bold">Archivo entregado:</h6>
             <div class="border rounded p-3 bg-light mb-3">
                 <i class="fa-solid fa-file-pdf text-danger me-2"></i>
-                <a href="${alumno.entrega.archivo_url}" target="_blank">${alumno.entrega.nombre_archivo || 'Ver archivo'}</a>
+                ${alumno.entrega.archivo_entrega_url ?
+                    `<a href="${alumno.entrega.archivo_entrega_url}" target="_blank">${alumno.entrega.nombre_archivo || 'Ver archivo'}</a>` :
+                    `<span class="text-muted">Sin archivo adjunto</span>`
+                }
             </div>
         </div>
     `;
