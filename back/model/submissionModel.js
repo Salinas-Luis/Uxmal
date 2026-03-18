@@ -8,7 +8,8 @@ class SubmissionModel {
                 tarea_id: submissionData.tarea_id,
                 estudiante_id: submissionData.estudiante_id,
                 archivo_entrega_url: submissionData.archivo_entrega_url,
-                comentario_alumno: submissionData.comentario_alumno
+                comentario_alumno: submissionData.comentario_alumno,
+                fecha_envio: new Date()
             }])
             .select();
         return { data, error };

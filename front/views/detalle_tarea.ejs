@@ -80,8 +80,14 @@
                         
                         <% if (entrega) { %>
                             <div class="alert alert-success small">Tarea entregada</div>
-                            <a href="<%= entrega.archivo_entrega_url %>" target="_blank" class="btn btn-outline-secondary w-100 mb-2">Ver mi entrega</a>
-                        <% } else { %>
+                            <a href="<%= entrega.archivo_entrega_url %>" target="_blank" class="btn btn-outline-secondary w-100 mb-2">Ver mi entrega</a>                            <% if (entrega.calificacion !== null && entrega.calificacion !== undefined) { %>
+                                <div class="mt-2">
+                                    <strong>Calificación: <%= entrega.calificacion %> / <%= tarea.puntos_maximos %> puntos</strong>
+                                    <% if (entrega.comentario_profesor) { %>
+                                        <p class="mb-0">Comentario del profesor: <%= entrega.comentario_profesor %></p>
+                                    <% } %>
+                                </div>
+                            <% } %>                        <% } else { %>
                             <form id="submissionForm">
                                 <div class="mb-3">
                                     <label class="btn btn-outline-primary w-100 py-3 border-dashed">
