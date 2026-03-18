@@ -57,3 +57,12 @@ async function joinClass() {
         console.error("Error al unirse:", error);
     }
 }
+const logoutBtn = document.getElementById('logoutBtn');
+
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function(e) {
+            localStorage.clear();
+
+            sessionStorage.clear();
+        });
+    }
