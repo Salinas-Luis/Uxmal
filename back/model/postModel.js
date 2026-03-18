@@ -26,7 +26,9 @@ static async create(postData) {
                     .select('*, usuarios!creador_id(nombre, apellido, avatar_url)') 
                     .eq('clase_id', claseId)
             ]);
-
+            console.log("Anuncios recuperados:", anuncios.length);
+console.log("Tareas recuperadas:", tareas.length);
+console.log("Contenido del feed combinado:", feed);
             if (anunciosRes.error) throw anunciosRes.error;
             if (tareasRes.error) throw tareasRes.error;
 
