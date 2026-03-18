@@ -26,3 +26,35 @@ exports.createPost = async (req, res) => {
         res.status(500).json({ error: "No se pudo publicar el anuncio", detalle: err.message });
     }
 };
+
+exports.deletePost = async (req, res) => {
+    try {
+        const postId = req.params.id;
+        if (!req.session || !req.session.user) {
+            return res.status(401).json({ error: "Sesión expirada o no iniciada" });
+        }
+
+        // Verificar que el usuario es profesor de la clase del anuncio
+        const { data: post } = await supabase.from('anuncios').select('clase_id').eq('id', postId).single();
+        if (!post) return res.status(404).json({ error: 'Anuncio no encontrado' });
+
+        const { data: rolData } = await supabase
+            .from('inscripciones')
+            .select('rol_en_clase')
+            .eq('clase_id', post.clase_id)
+            .eq('estudiante_id', req.session.user.id)
+            .single();
+
+        if (!rolData || rolData.rol_en_clase !== 'profesor') {
+            return res.status(403).json({ error: 'No tienes permiso para eliminar este anuncio' });
+        }
+
+        const { error } = await PostModel.delete(postId);
+        if (error) throw error;
+
+        res.json({ message: 'Anuncio eliminado' });
+    } catch (err) {
+        console.error('Error en deletePost:', err);
+        res.status(500).json({ error: 'No se pudo eliminar el anuncio' });
+    }
+};

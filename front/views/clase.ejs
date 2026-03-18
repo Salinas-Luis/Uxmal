@@ -97,9 +97,17 @@
                                         <% if (post.tipo === 'tarea') { %>
                                             <h5 class="mb-1 text-primary fw-bold"><%= post.titulo %></h5>
                                             <p class="text-muted mb-2"><%= post.descripcion %></p>
-                                            <a href="/tarea/<%= post.id %>" class="btn btn-outline-primary btn-sm mt-2 rounded-pill">Ver tarea</a>
+                                            <div class="d-flex gap-2">
+                                                <a href="/tarea/<%= post.id %>" class="btn btn-outline-primary btn-sm mt-2 rounded-pill">Ver tarea</a>
+                                                <% if (isProfesor) { %>
+                                                    <button class="btn btn-outline-danger btn-sm mt-2 rounded-pill" onclick="deleteAssignment('<%= post.id %>')">Eliminar</button>
+                                                <% } %>
+                                            </div>
                                         <% } else { %>
                                             <p class="card-text"><%= post.contenido %></p>
+                                            <% if (isProfesor) { %>
+                                                <button class="btn btn-outline-danger btn-sm mt-2 rounded-pill" onclick="deletePost('<%= post.id %>')">Eliminar</button>
+                                            <% } %>
                                         <% } %>
                                     </div>
                                 </div>

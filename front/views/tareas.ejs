@@ -26,7 +26,7 @@
     <main class="container mt-4" style="max-width: 800px;">
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2 class="fw-normal">Trabajo en clase</h2>
-            <% if (user.id === clase.profesor_id) { %>
+            <% if (isProfesor) { %>
                 <button class="btn btn-primary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#createAssignmentModal">
                     <i class="fa-solid fa-plus me-2"></i> Crear
                 </button>
@@ -52,6 +52,9 @@
                             </div>
                             <div class="text-end">
                                 <a href="/tarea/<%= tarea.id %>" class="btn btn-light btn-sm rounded-pill">Ver tarea</a>
+                                <% if (isProfesor) { %>
+                                    <button class="btn btn-outline-danger btn-sm rounded-pill ms-2" onclick="deleteAssignment('<%= tarea.id %>')">Eliminar</button>
+                                <% } %>
                             </div>
                         </div>
                     </div>

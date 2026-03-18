@@ -100,10 +100,18 @@ app.get('/clase/:id', authenticateToken, async (req, res) => {
         const { data: clase } = await supabase.from('clases').select('*').eq('id', claseId).single();
         
         const { data: posts, error } = await PostModel.getByClass(claseId);
-
         if (error) throw error;
 
-        res.render('clase', { clase, posts: posts || [], user });
+        const { data: rolData } = await supabase
+            .from('inscripciones')
+            .select('rol_en_clase')
+            .eq('clase_id', claseId)
+            .eq('estudiante_id', user.id)
+            .single();
+
+        const isProfesor = rolData?.rol_en_clase === 'profesor';
+
+        res.render('clase', { clase, posts: posts || [], user, isProfesor });
     } catch (error) {
         console.error("Error al cargar la clase:", error);
         res.status(500).send("Error al cargar la clase");
@@ -122,7 +130,16 @@ app.get('/clase/:id/tareas', authenticateToken, async (req, res) => {
             .eq('clase_id', claseId)
             .order('fecha_creacion', { ascending: false });
 
-        res.render('tareas', { clase, tareas: tareas || [], user });
+        const { data: rolData } = await supabase
+            .from('inscripciones')
+            .select('rol_en_clase')
+            .eq('clase_id', claseId)
+            .eq('estudiante_id', user.id)
+            .single();
+
+        const isProfesor = rolData?.rol_en_clase === 'profesor';
+
+        res.render('tareas', { clase, tareas: tareas || [], user, isProfesor });
     } catch (error) {
         res.status(500).send("Error al cargar tareas");
     }

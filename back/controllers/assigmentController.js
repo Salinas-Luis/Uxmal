@@ -56,10 +56,43 @@ exports.getAssignmentsByClass = async (req, res) => {
 };
 
 exports.deleteAssignment = async (req, res) => {
-    const { id } = req.params;
-    const { error } = await AssignmentModel.delete(id);
-    if (error) return res.status(400).json({ error: error.message });
-    res.json({ message: "Tarea eliminada correctamente" });
+    try {
+        const { id } = req.params;
+
+        if (!req.session || !req.session.user) {
+            return res.status(401).json({ error: "Sesión expirada o no iniciada" });
+        }
+
+        // Verificar que el usuario es profesor de la clase de la tarea
+        const { data: tarea } = await supabase
+            .from('tareas')
+            .select('clase_id')
+            .eq('id', id)
+            .single();
+
+        if (!tarea) {
+            return res.status(404).json({ error: "Tarea no encontrada" });
+        }
+
+        const { data: rolData } = await supabase
+            .from('inscripciones')
+            .select('rol_en_clase')
+            .eq('clase_id', tarea.clase_id)
+            .eq('estudiante_id', req.session.user.id)
+            .single();
+
+        if (!rolData || rolData.rol_en_clase !== 'profesor') {
+            return res.status(403).json({ error: 'No tienes permiso para eliminar esta tarea' });
+        }
+
+        const { error } = await AssignmentModel.delete(id);
+        if (error) return res.status(400).json({ error: error.message });
+
+        res.json({ message: "Tarea eliminada correctamente" });
+    } catch (err) {
+        console.error('Error al eliminar tarea:', err);
+        res.status(500).json({ error: 'No se pudo eliminar la tarea' });
+    }
 };
 
 exports.submitSubmission = async (req, res) => {

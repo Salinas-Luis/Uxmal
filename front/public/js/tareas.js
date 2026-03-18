@@ -19,7 +19,7 @@ async function publishAssignment(claseId) {
     }
 
     try {
-        const response = await fetch('https://uxmal-6t33.vercel.app/api/assignments', {
+        const response = await fetch('/api/assignments', {
             method: 'POST',
             body: formData 
         });
@@ -33,5 +33,24 @@ async function publishAssignment(claseId) {
     } catch (err) {
         console.error("Error en la petición:", err);
         alert("Error de conexión con el servidor");
+    }
+}
+
+async function deleteAssignment(assignmentId) {
+    if (!confirm('¿Eliminar esta tarea?')) return;
+
+    try {
+        const response = await fetch(`/api/assignments/${assignmentId}`, {
+            method: 'DELETE'
+        });
+
+        if (response.ok) {
+            location.reload();
+        } else {
+            alert('No se pudo eliminar la tarea');
+        }
+    } catch (error) {
+        console.error(error);
+        alert('Error al eliminar la tarea');
     }
 }

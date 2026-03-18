@@ -1,7 +1,7 @@
 const supabase = require('../config/db');
 
 class PostModel {
-static async create(postData) {
+    static async create(postData) {
         const { data, error } = await supabase
             .from('anuncios')
             .insert([{
@@ -11,6 +11,14 @@ static async create(postData) {
                 fecha_publicacion: new Date() 
             }])
             .select();
+        return { data, error };
+    }
+
+    static async delete(postId) {
+        const { data, error } = await supabase
+            .from('anuncios')
+            .delete()
+            .eq('id', postId);
         return { data, error };
     }
 
