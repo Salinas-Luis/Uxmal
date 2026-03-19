@@ -71,3 +71,54 @@ exports.joinClass = async (req, res) => {
         res.status(500).json({ error: "No se pudo completar la unión a la clase" });
     }
 };
+
+exports.removeStudent = async (req, res) => {
+    try {
+        const { classId, studentId } = req.params;
+        const userId = req.session.user.id;
+
+        // Verificar que el usuario sea profesor de la clase
+        const { data: clase } = await supabase
+            .from('clases')
+            .select('profesor_id')
+            .eq('id', classId)
+            .single();
+
+        if (!clase) {
+            return res.status(404).json({ error: 'Clase no encontrada' });
+        }
+
+        if (clase.profesor_id !== userId) {
+            return res.status(403).json({ error: 'Solo el profesor puede dar de baja alumnos' });
+        }
+
+        // Asegurarnos de que el usuario a eliminar sea alumno (no profesor)
+        const { data: inscripcion } = await supabase
+            .from('inscripciones')
+            .select('rol_en_clase')
+            .eq('clase_id', classId)
+            .eq('estudiante_id', studentId)
+            .single();
+
+        if (!inscripcion) {
+            return res.status(404).json({ error: 'Inscripción no encontrada' });
+        }
+
+        if (inscripcion.rol_en_clase !== 'estudiante') {
+            return res.status(400).json({ error: 'No se puede eliminar a este usuario' });
+        }
+
+        const { error } = await supabase
+            .from('inscripciones')
+            .delete()
+            .eq('clase_id', classId)
+            .eq('estudiante_id', studentId);
+
+        if (error) throw error;
+
+        res.json({ message: 'Alumno dado de baja correctamente' });
+    } catch (err) {
+        console.error('Error al dar de baja alumno:', err);
+        res.status(500).json({ error: 'No se pudo dar de baja al alumno' });
+    }
+};

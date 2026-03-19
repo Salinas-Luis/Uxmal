@@ -250,11 +250,15 @@ app.get('/clase/:id/personas', authenticateToken, async (req, res) => {
         const profesores = inscritos.filter(i => i.rol_en_clase === 'profesor');
         const alumnos = inscritos.filter(i => i.rol_en_clase === 'estudiante');
 
+        const rolUsuarioEnClase = inscritos.find(i => i.usuarios.id === user.id)?.rol_en_clase;
+        const isProfesor = rolUsuarioEnClase === 'profesor';
+
         res.render('personas', { 
             clase, 
             profesores, 
             alumnos, 
-            user 
+            user, 
+            isProfesor
         });
 
     } catch (error) {

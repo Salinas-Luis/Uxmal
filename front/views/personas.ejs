@@ -61,7 +61,11 @@
                             <%= a.usuarios.nombre %> <%= a.usuarios.apellido %>
                         </span>
                         <div class="ms-auto">
-                            <button class="btn btn-link text-muted"><i class="fa-regular fa-envelope"></i></button>
+                            <% if (isProfesor) { %>
+                                <button class="btn btn-sm btn-outline-danger" onclick="removeStudent('<%= clase.id %>', '<%= a.usuarios.id %>', '<%= a.usuarios.nombre %> <%= a.usuarios.apellido %>')">Dar de baja</button>
+                            <% } else { %>
+                                <button class="btn btn-link text-muted"><i class="fa-regular fa-envelope"></i></button>
+                            <% } %>
                         </div>
                     </div>
                 <% }) %>
@@ -76,4 +80,25 @@
 </div>   
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        async function removeStudent(classId, studentId, studentName) {
+            if (!confirm(`¿Dar de baja a ${studentName}?`)) return;
+
+            try {
+                const response = await fetch(`/api/classes/${classId}/students/${studentId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.ok) {
+                    location.reload();
+                } else {
+                    const errorData = await response.json().catch(() => null);
+                    alert('No se pudo dar de baja al alumno: ' + (errorData?.error || response.statusText));
+                }
+            } catch (err) {
+                console.error(err);
+                alert('Error al dar de baja al alumno');
+            }
+        }
+    </script>
 </body>
