@@ -26,12 +26,32 @@
     </nav>
 
     <main class="container mt-4" style="max-width: 900px;">
-        <div class="p-5 mb-4 rounded-3 text-white shadow-sm" style="background: linear-gradient(135deg, #1a73e8, #0d47a1); min-height: 200px;">
-            <div class="container-fluid py-5">
+        <div class="p-5 mb-4 rounded-3 text-white shadow-sm position-relative overflow-hidden" 
+             style="background-image: url('<%= clase.portada_url || '' %>');
+                    background-color: #1a73e8; 
+                    background-size: cover; 
+                    background-position: center;
+                    min-height: 200px;">
+            <% if (clase.portada_url) { %>
+                <div style="background: rgba(0,0,0,0.5); position: absolute; top: 0; left: 0; right: 0; bottom: 0;"></div>
+            <% } %>
+            <div class="container-fluid py-5 position-relative" style="z-index: 1;">
                 <h1 class="display-5 fw-bold"><%= clase.nombre_clase %></h1>
                 <p class="fs-4"><%= clase.seccion %></p>
                 <div class="badge bg-light text-dark px-3 py-2">Código de clase: <strong><%= clase.codigo_acceso %></strong></div>
             </div>
+            <% if (isProfesor) { %>
+                <label for="bannerInputClase" 
+                       class="btn btn-light rounded-circle position-absolute top-0 end-0 m-3"
+                       style="z-index: 2; cursor: pointer;">
+                    <i class="fa-solid fa-image"></i>
+                    <input type="file" 
+                           id="bannerInputClase" 
+                           hidden 
+                           accept="image/*"
+                           onchange="uploadClassBanner('<%= clase.id %>', event)">
+                </label>
+            <% } %>
         </div>
 
         <div class="row">

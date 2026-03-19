@@ -128,3 +128,70 @@ exports.removeStudent = async (req, res) => {
         res.status(500).json({ error: 'No se pudo dar de baja al alumno' });
     }
 };
+
+exports.uploadBanner = async (req, res) => {
+    try {
+        const { classId } = req.params;
+        const user = req.user || req.session?.user;
+        const file = req.file;
+
+        if (!user) {
+            return res.status(401).json({ error: "Sesión expirada o no iniciada" });
+        }
+
+        if (!file) {
+            return res.status(400).json({ error: "No se subió ningún archivo" });
+        }
+
+        // Verificar que el usuario es profesor de la clase
+        const { data: clase } = await supabase
+            .from('clases')
+            .select('profesor_id, portada_url')
+            .eq('id', classId)
+            .single();
+
+        if (!clase) {
+            return res.status(404).json({ error: 'Clase no encontrada' });
+        }
+
+        if (clase.profesor_id !== user.id) {
+            return res.status(403).json({ error: 'Solo el profesor puede actualizar el banner' });
+        }
+
+        if (clase.portada_url) {
+            const urlParts = clase.portada_url.split('/');
+            const fileName = urlParts[urlParts.length - 1];
+            await supabase.storage
+                .from('class-banners')
+                .remove([fileName])
+                .catch(err => console.log('Archivo anterior no encontrado:', err));
+        }
+
+        const fileName = `banner_${classId}_${Date.now()}`;
+        const { data, error } = await supabase.storage
+            .from('class-banners')
+            .upload(fileName, file.buffer, {
+                contentType: file.mimetype,
+                upsert: true
+            });
+
+        if (error) throw error;
+
+        const { data: publicUrl } = supabase.storage
+            .from('class-banners')
+            .getPublicUrl(fileName);
+        const url = publicUrl.publicUrl;
+
+        const { error: updateError } = await supabase
+            .from('clases')
+            .update({ portada_url: url })
+            .eq('id', classId);
+
+        if (updateError) throw updateError;
+
+        res.json({ url });
+    } catch (err) {
+        console.error('Error al subir banner:', err);
+        res.status(500).json({ error: 'No se pudo subir el banner' });
+    }
+};

@@ -63,3 +63,34 @@ async function deleteAssignment(assignmentId) {
         alert('Error al eliminar la tarea');
     }
 }
+
+async function uploadClassBanner(classId, event) {
+    const file = event.target.files[0];
+    
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('banner', file);
+
+    try {
+        const response = await fetch(`/api/classes/${classId}/banner`, {
+            method: 'POST',
+            body: formData,
+            credentials: 'include'
+        });
+
+        const result = await response.json();
+        if (response.ok) {
+            const bannerDiv = document.querySelector('[style*="background-image"]');
+            if (bannerDiv) {
+                bannerDiv.style.backgroundImage = `url('${result.url}')`;
+            }
+            alert('Banner actualizado correctamente');
+        } else {
+            alert('Error: ' + (result.error || 'No se pudo subir el banner'));
+        }
+    } catch (error) {
+        console.error('Error al subir banner:', error);
+        alert('Error al subir la imagen');
+    }
+}

@@ -69,6 +69,8 @@ app.get('/dashboard', authenticateToken, async (req, res) => {
                     nombre_clase,
                     seccion,
                     codigo_acceso,
+                    portada_url,
+                    profesor_id,
                     profesor:usuarios!profesor_id ( nombre, apellido )
                 )
             `)
@@ -76,7 +78,10 @@ app.get('/dashboard', authenticateToken, async (req, res) => {
 
         if (error) throw error;
 
-        const listaClases = clases.map(item => item.clases);
+        const listaClases = clases.map(item => ({
+            ...item.clases,
+            isProfesor: item.clases.profesor_id === user.id
+        }));
 
         res.render('dashboard', { 
             user: user, 
