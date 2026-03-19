@@ -37,6 +37,9 @@ exports.updateAvatar = async (req, res) => {
         if (req.session?.user) {
             req.session.user.avatar_url = url;
         }
+        if (req.user) {
+            req.user.avatar_url = url;
+        }
 
         res.json({ url });
     } catch (err) {
@@ -70,6 +73,12 @@ exports.updateProfile = async (req, res) => {
             req.session.user.nombre = nombre;
             req.session.user.apellido = apellido;
             req.session.user.email = email;
+        }
+        // También actualizar req.user si viene de JWT
+        if (req.user) {
+            req.user.nombre = nombre;
+            req.user.apellido = apellido;
+            req.user.email = email;
         }
 
         res.json({ message: "Perfil actualizado correctamente" });
@@ -148,6 +157,10 @@ exports.deleteAvatar = async (req, res) => {
         // Actualizar la sesión removiendo la URL del avatar
         if (req.session?.user) {
             req.session.user.avatar_url = null;
+        }
+        // También actualizar req.user si viene de JWT
+        if (req.user) {
+            req.user.avatar_url = null;
         }
 
         res.json({ message: "Avatar eliminado correctamente" });
