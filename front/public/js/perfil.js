@@ -89,7 +89,7 @@ document.getElementById('profileForm').addEventListener('submit', async function
         
         if (response.ok) {
             alert('Perfil actualizado correctamente');
-            location.reload();
+            location.reload(); 
         } else {
             const error = await response.json();
             alert('Error: ' + (error.error || 'No se pudo actualizar el perfil'));

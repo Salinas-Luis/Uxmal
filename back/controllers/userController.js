@@ -34,6 +34,10 @@ exports.updateAvatar = async (req, res) => {
 
         if (dbError) throw dbError;
 
+        if (req.session?.user) {
+            req.session.user.avatar_url = url;
+        }
+
         res.json({ url });
     } catch (err) {
         console.error(err);
@@ -60,6 +64,13 @@ exports.updateProfile = async (req, res) => {
             .eq('id', user.id);
 
         if (error) throw error;
+
+        // Actualizar la sesión con los nuevos datos
+        if (req.session?.user) {
+            req.session.user.nombre = nombre;
+            req.session.user.apellido = apellido;
+            req.session.user.email = email;
+        }
 
         res.json({ message: "Perfil actualizado correctamente" });
     } catch (err) {
@@ -133,6 +144,11 @@ exports.deleteAvatar = async (req, res) => {
             .eq('id', user.id);
 
         if (updateError) throw updateError;
+
+        // Actualizar la sesión removiendo la URL del avatar
+        if (req.session?.user) {
+            req.session.user.avatar_url = null;
+        }
 
         res.json({ message: "Avatar eliminado correctamente" });
     } catch (err) {
