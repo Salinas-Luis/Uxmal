@@ -41,6 +41,7 @@ async function guardarNota(entregaId) {
         const response = await fetch(`/api/assignments/grade/${entregaId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify({ calificacion })
         });
 

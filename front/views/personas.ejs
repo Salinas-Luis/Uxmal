@@ -86,7 +86,8 @@
 
             try {
                 const response = await fetch(`/api/classes/${classId}/students/${studentId}`, {
-                    method: 'DELETE'
+                    method: 'DELETE',
+                    credentials: 'include'
                 });
 
                 if (response.ok) {

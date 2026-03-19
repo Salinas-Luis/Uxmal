@@ -35,7 +35,7 @@ app.set('views', path.join(__dirname, '../front/views'));
 app.use('/public', express.static(path.join(__dirname, '../front/public')));
 
 app.use('/api/auth', userRoutes);
-app.use('/api/classes', classRoutes);
+app.use('/api/classes', authenticateToken, classRoutes);
 app.use('/api/assignments', assignmentRoutes);
 app.use('/api/posts', postRoutes);
 

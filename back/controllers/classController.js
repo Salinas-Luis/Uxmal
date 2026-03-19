@@ -42,7 +42,11 @@ exports.createClass = async (req, res) => {
 exports.joinClass = async (req, res) => {
     try {
         const { codigo_acceso } = req.body;
-        const usuario_id = req.session.user.id;
+        const user = req.user || req.session?.user;
+        if (!user) {
+            return res.status(401).json({ error: "Sesión expirada o no iniciada" });
+        }
+        const usuario_id = user.id;
 
         const { data: clase, error: claseError } = await supabase
             .from('clases')
@@ -75,9 +79,12 @@ exports.joinClass = async (req, res) => {
 exports.removeStudent = async (req, res) => {
     try {
         const { classId, studentId } = req.params;
-        const userId = req.session.user.id;
+        const user = req.user || req.session?.user;
+        if (!user) {
+            return res.status(401).json({ error: "Sesión expirada o no iniciada" });
+        }
+        const userId = user.id;
 
-        // Verificar que el usuario sea profesor de la clase
         const { data: clase } = await supabase
             .from('clases')
             .select('profesor_id')
@@ -92,7 +99,6 @@ exports.removeStudent = async (req, res) => {
             return res.status(403).json({ error: 'Solo el profesor puede dar de baja alumnos' });
         }
 
-        // Asegurarnos de que el usuario a eliminar sea alumno (no profesor)
         const { data: inscripcion } = await supabase
             .from('inscripciones')
             .select('rol_en_clase')

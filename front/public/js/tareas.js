@@ -21,7 +21,8 @@ async function publishAssignment(claseId) {
     try {
         const response = await fetch('/api/assignments', {
             method: 'POST',
-            body: formData 
+            body: formData,
+            credentials: 'include'
         });
 
         if (response.ok) {
@@ -41,7 +42,8 @@ async function deleteAssignment(assignmentId) {
 
     try {
         const response = await fetch(`/api/assignments/${assignmentId}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            credentials: 'include'
         });
 
         if (response.ok) {

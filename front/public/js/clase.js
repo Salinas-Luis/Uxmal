@@ -7,6 +7,7 @@ async function createPost(claseId) {
         const response = await fetch('/api/posts', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify({ contenido, clase_id: claseId })
         });
 
@@ -26,7 +27,8 @@ async function deletePost(postId) {
 
     try {
         const response = await fetch(`/api/posts/${postId}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            credentials: 'include'
         });
 
         if (response.ok) {
@@ -46,7 +48,8 @@ async function deleteAssignment(assignmentId) {
 
     try {
         const response = await fetch(`/api/assignments/${assignmentId}`, {
-            method: 'DELETE'
+            method: 'DELETE',
+            credentials: 'include'
         });
 
         if (response.ok) {

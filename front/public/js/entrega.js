@@ -18,7 +18,8 @@ async function submitWork(tareaId) {
     try {
         const response = await fetch('/api/assignments/submit', {
             method: 'POST',
-            body: formData
+            body: formData,
+            credentials: 'include'
         });
 
         if (response.ok) {
@@ -42,7 +43,8 @@ async function submitWorkWithoutFile(tareaId) {
     try {
         const response = await fetch('/api/assignments/submit', {
             method: 'POST',
-            body: formData
+            body: formData,
+            credentials: 'include'
         });
 
         if (response.ok) {
