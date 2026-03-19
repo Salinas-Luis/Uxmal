@@ -29,5 +29,58 @@ async function updateAvatar() {
 
 function logout() {
     localStorage.removeItem('user');
-    window.location.href = '/login';
+    window.location.href = '/logout';
+}
+
+document.getElementById('profileForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const nombre = document.getElementById('nombre').value;
+    const apellido = document.getElementById('apellido').value;
+    const email = document.getElementById('email').value;
+    
+    try {
+        const response = await fetch('/api/auth/update-profile', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ nombre, apellido, email })
+        });
+        
+        if (response.ok) {
+            alert('Perfil actualizado correctamente');
+            location.reload();
+        } else {
+            const error = await response.json();
+            alert('Error: ' + (error.error || 'No se pudo actualizar el perfil'));
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Error al actualizar el perfil');
+    }
+});
+
+async function deleteAccount() {
+    if (!confirm('¿Estás seguro de que quieres eliminar tu cuenta? Esta acción no se puede deshacer.')) return;
+    
+    if (!confirm('Esta es tu última oportunidad. ¿Realmente quieres eliminar tu cuenta permanentemente?')) return;
+    
+    try {
+        const response = await fetch('/api/auth/delete-account', {
+            method: 'DELETE',
+            credentials: 'include'
+        });
+        
+        if (response.ok) {
+            alert('Cuenta eliminada correctamente');
+            localStorage.removeItem('user');
+            window.location.href = '/login';
+        } else {
+            const error = await response.json();
+            alert('Error: ' + (error.error || 'No se pudo eliminar la cuenta'));
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Error al eliminar la cuenta');
+    }
 }
