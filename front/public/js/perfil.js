@@ -1,29 +1,44 @@
 async function updateAvatar() {
     const fileInput = document.getElementById('avatarInput');
     const file = fileInput.files[0];
-    const user = JSON.parse(localStorage.getItem('user'));
 
     if (!file) return;
 
     const formData = new FormData();
     formData.append('avatar', file);
-    formData.append('userId', user.id);
 
     try {
-        const response = await fetch('https://uxmal-6t33.vercel.app/api/user/update-avatar', {
+        const response = await fetch('/api/auth/update-avatar', {
             method: 'POST',
-            body: formData
+            body: formData,
+            credentials: 'include'
         });
 
         const result = await response.json();
         if (response.ok) {
             document.getElementById('profileImage').src = result.url;
+            const user = JSON.parse(localStorage.getItem('user') || '{}');
             user.avatar_url = result.url;
             localStorage.setItem('user', JSON.stringify(user));
+            
+            const deleteBtn = document.querySelector('button[onclick="deleteAvatar()"]');
+            if (!deleteBtn) {
+                const container = document.querySelector('.position-relative.d-inline-block.mb-3');
+                const newDeleteBtn = document.createElement('button');
+                newDeleteBtn.className = 'btn btn-sm btn-outline-danger rounded-circle position-absolute bottom-0 start-0';
+                newDeleteBtn.onclick = deleteAvatar;
+                newDeleteBtn.title = 'Eliminar foto de perfil';
+                newDeleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i>';
+                container.appendChild(newDeleteBtn);
+            }
+            
             alert("Foto actualizada correctamente");
+        } else {
+            alert('Error: ' + (result.error || 'No se pudo actualizar la foto'));
         }
     } catch (err) {
         console.error(err);
+        alert('Error al subir la foto');
     }
 }
 
@@ -37,9 +52,7 @@ async function deleteAvatar() {
         });
 
         if (response.ok) {
-            // Actualizar la imagen a la por defecto
             document.getElementById('profileImage').src = '/public/img/default-avatar.png';
-            // Remover el botón de eliminar
             const deleteBtn = document.querySelector('button[onclick="deleteAvatar()"]');
             if (deleteBtn) deleteBtn.remove();
             
