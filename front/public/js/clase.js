@@ -81,7 +81,7 @@ async function uploadClassBanner(classId, event) {
 
         const result = await response.json();
         if (response.ok) {
-            const bannerDiv = document.querySelector('[style*="background-image"]');
+            const bannerDiv = event.target.closest('.p-5');
             if (bannerDiv) {
                 bannerDiv.style.backgroundImage = `url('${result.url}')`;
             }

@@ -75,7 +75,7 @@ async function uploadBanner(classId, event) {
 
         const result = await response.json();
         if (response.ok) {
-            const bannerElement = event.target.previousElementSibling?.parentElement;
+            const bannerElement = event.target.closest('.card-header');
             if (bannerElement) {
                 bannerElement.style.backgroundImage = `url('${result.url}')`;
             }
