@@ -56,6 +56,32 @@
 
             <div class="col-md-4">
                 <% if (rol === 'profesor') { %>
+                    <div class="card shadow-sm border-0 p-3 mb-3">
+                        <h5 class="fw-bold mb-3">Resumen de entregas</h5>
+                        <% const totalAlumnos = alumnosConEstado ? alumnosConEstado.length : 0; %>
+                        <% const entregadosCount = alumnosConEstado ? alumnosConEstado.filter(a => a.entrega).length : 0; %>
+                        <% const faltantesCount = totalAlumnos - entregadosCount; %>
+
+                        <div class="d-flex flex-wrap gap-2 mb-3">
+                            <span class="badge bg-success">Entregados: <%= entregadosCount %></span>
+                            <span class="badge bg-secondary">Faltantes: <%= faltantesCount %></span>
+                            <span class="badge bg-info text-dark">Total: <%= totalAlumnos %></span>
+                        </div>
+
+                        <% if (faltantesCount > 0) { %>
+                            <details class="mt-2">
+                                <summary class="small text-muted">Ver quién no entregó</summary>
+                                <ul class="list-unstyled mt-2 mb-0">
+                                    <% alumnosConEstado.filter(a => !a.entrega).forEach(a => { %>
+                                        <li class="small">• <%= a.nombre %> <%= a.apellido %></li>
+                                    <% }) %>
+                                </ul>
+                            </details>
+                        <% } else { %>
+                            <p class="small text-muted mb-0">Todos los alumnos entregaron.</p>
+                        <% } %>
+                    </div>
+
                     <div class="card shadow-sm border-0 p-3">
                         <h5 class="fw-bold mb-3">Entregas de estudiantes</h5>
                         <a href="/tarea/<%= tarea.id %>/revision" class="btn btn-primary w-100 mb-3">Ver y calificar entregas</a>

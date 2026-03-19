@@ -167,6 +167,7 @@ app.get('/tarea/:id', authenticateToken, async (req, res) => {
 
         let entregas = null;
         let entrega = null;
+        let alumnosConEstado = null;
 
         if (rol === 'profesor') {
             const { data: allEntregas } = await supabase
@@ -174,6 +175,20 @@ app.get('/tarea/:id', authenticateToken, async (req, res) => {
                 .select('*, estudiante:usuarios(nombre, apellido)')
                 .eq('tarea_id', tareaId);
             entregas = allEntregas || [];
+
+            const { data: inscritos } = await supabase
+                .from('inscripciones')
+                .select('usuarios(*)')
+                .eq('clase_id', tarea.clase_id)
+                .eq('rol_en_clase', 'estudiante');
+
+            alumnosConEstado = (inscritos || []).map(ins => {
+                const entrega = (entregas || []).find(e => e.estudiante_id === ins.usuarios.id);
+                return {
+                    ...ins.usuarios,
+                    entrega: entrega || null
+                };
+            });
         } else {
             const { data: userEntrega } = await supabase
                 .from('entregas')
@@ -184,7 +199,7 @@ app.get('/tarea/:id', authenticateToken, async (req, res) => {
             entrega = userEntrega;
         }
 
-        res.render('detalle_tarea', { tarea, entrega, entregas, rol, user });
+        res.render('detalle_tarea', { tarea, entrega, entregas, alumnosConEstado, rol, user });
     } catch (error) {
         console.error("Error al cargar tarea:", error);
         res.status(500).send("Error al cargar la tarea");
