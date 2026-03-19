@@ -32,7 +32,8 @@ async function deletePost(postId) {
         if (response.ok) {
             location.reload();
         } else {
-            alert('No se pudo eliminar el anuncio');
+            const errorData = await response.json().catch(() => null);
+            alert('No se pudo eliminar el anuncio: ' + (errorData?.error || response.statusText));
         }
     } catch (error) {
         console.error(error);
@@ -51,7 +52,8 @@ async function deleteAssignment(assignmentId) {
         if (response.ok) {
             location.reload();
         } else {
-            alert('No se pudo eliminar la tarea');
+            const errorData = await response.json().catch(() => null);
+            alert('No se pudo eliminar la tarea: ' + (errorData?.error || response.statusText));
         }
     } catch (error) {
         console.error(error);
