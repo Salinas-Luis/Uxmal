@@ -116,7 +116,85 @@ app.get('/clase/:id', authenticateToken, async (req, res) => {
 
         const isProfesor = rolData?.rol_en_clase === 'profesor';
 
-        res.render('clase', { clase, posts: posts || [], user, isProfesor });
+        let classPerformance = null;
+        if (isProfesor) {
+            const { data: tareas } = await supabase
+                .from('tareas')
+                .select('id, fecha_entrega, puntos_maximos')
+                .eq('clase_id', claseId);
+
+            const { data: estudiantes } = await supabase
+                .from('inscripciones')
+                .select('usuarios(id)')
+                .eq('clase_id', claseId)
+                .eq('rol_en_clase', 'estudiante');
+
+            if (tareas && tareas.length > 0 && estudiantes && estudiantes.length > 0) {
+                const { data: entregas } = await supabase
+                    .from('entregas')
+                    .select('tarea_id, estudiante_id, fecha_envio, calificacion')
+                    .in('tarea_id', tareas.map(t => t.id));
+
+                const totalEstudiantes = estudiantes.length;
+                const totalTareas = tareas.length;
+                const totalEntregas = entregas ? entregas.length : 0;
+                
+                let entregadasAtiempo = 0;
+                let entregadasTarde = 0;
+                let noEntregadas = 0;
+                let totalCalificaciones = 0;
+                let countCalificadas = 0;
+
+                const entregasMap = new Map();
+                entregas?.forEach(e => {
+                    const key = `${e.tarea_id}-${e.estudiante_id}`;
+                    entregasMap.set(key, e);
+                });
+
+                tareas.forEach(tarea => {
+                    estudiantes.forEach(est => {
+                        const key = `${tarea.id}-${est.usuarios.id}`;
+                        const entrega = entregasMap.get(key);
+                        
+                        if (!entrega) {
+                            noEntregadas++;
+                        } else {
+                            const entregaDate = new Date(entrega.fecha_envio);
+                            const deadlineDate = new Date(tarea.fecha_entrega);
+                            
+                            if (entregaDate <= deadlineDate) {
+                                entregadasAtiempo++;
+                            } else {
+                                entregadasTarde++;
+                            }
+                            
+                            if (entrega.calificacion !== null && entrega.calificacion !== undefined) {
+                                totalCalificaciones += entrega.calificacion;
+                                countCalificadas++;
+                            }
+                        }
+                    });
+                });
+
+                classPerformance = {
+                    totalEstudiantes,
+                    totalTareas,
+                    totalEntregas,
+                    entregadasAtiempo,
+                    entregadasTarde,
+                    noEntregadas,
+                    porcentajeEntrega: totalTareas * totalEstudiantes > 0 
+                        ? ((totalEntregas / (totalTareas * totalEstudiantes)) * 100).toFixed(1) 
+                        : 0,
+                    promedioCalificacion: countCalificadas > 0 
+                        ? (totalCalificaciones / countCalificadas).toFixed(2) 
+                        : 0,
+                    tareasSinCalificar: totalEntregas - countCalificadas
+                };
+            }
+        }
+
+        res.render('clase', { clase, posts: posts || [], user, isProfesor, classPerformance });
     } catch (error) {
         console.error("Error al cargar la clase:", error);
         res.status(500).send("Error al cargar la clase");
