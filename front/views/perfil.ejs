@@ -32,6 +32,13 @@
                                 <i class="fa-solid fa-camera"></i>
                                 <input type="file" id="avatarInput" hidden accept="image/*" onchange="updateAvatar()">
                             </label>
+                            <% if (user.avatar_url) { %>
+                                <button class="btn btn-sm btn-outline-danger rounded-circle position-absolute bottom-0 start-0" 
+                                        onclick="deleteAvatar()" 
+                                        title="Eliminar foto de perfil">
+                                    <i class="fa-solid fa-trash"></i>
+                                </button>
+                            <% } %>
                         </div>
 
                         <h3 class="fw-bold mb-0"><%= user.nombre %> <%= user.apellido %></h3>
@@ -65,11 +72,8 @@
                         <hr class="my-4">
 
                         <div class="text-start">
-                            <h6 class="fw-bold mb-3 text-danger">Zona de peligro</h6>
+                            <h6 class="fw-bold mb-3 text-danger">Acciones permanentes</h6>
                             <div class="d-grid gap-2">
-                                <button class="btn btn-outline-danger" onclick="logout()">
-                                    <i class="fa-solid fa-right-from-bracket me-2"></i> Cerrar Sesión
-                                </button>
                                 <button class="btn btn-danger" onclick="deleteAccount()">
                                     <i class="fa-solid fa-trash me-2"></i> Eliminar cuenta
                                 </button>

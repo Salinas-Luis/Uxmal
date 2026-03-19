@@ -12,7 +12,7 @@ exports.updateAvatar = async (req, res) => {
         const fileName = `avatar_${userId}_${Date.now()}`;
 
         const { data, error } = await supabase.storage
-            .from('avatars')
+            .from('avatares')
             .upload(fileName, file.buffer, { 
                 contentType: file.mimetype,
                 upsert: true
@@ -20,7 +20,7 @@ exports.updateAvatar = async (req, res) => {
 
         if (error) throw error;
 
-        const { data: publicUrl } = supabase.storage.from('avatars').getPublicUrl(fileName);
+        const { data: publicUrl } = supabase.storage.from('avatares').getPublicUrl(fileName);
         const url = publicUrl.publicUrl;
 
         const { error: dbError } = await supabase
@@ -95,5 +95,49 @@ exports.deleteAccount = async (req, res) => {
     } catch (err) {
         console.error('Error al eliminar cuenta:', err);
         res.status(500).json({ error: "No se pudo eliminar la cuenta" });
+    }
+};
+
+exports.deleteAvatar = async (req, res) => {
+    try {
+        const user = req.user || req.session?.user;
+        if (!user) {
+            return res.status(401).json({ error: "Sesión expirada o no iniciada" });
+        }
+
+        // Obtener la URL actual del avatar para extraer el nombre del archivo
+        const { data: userData, error: fetchError } = await supabase
+            .from('usuarios')
+            .select('avatar_url')
+            .eq('id', user.id)
+            .single();
+
+        if (fetchError) throw fetchError;
+
+        // Si hay un avatar, intentar eliminar el archivo del storage
+        if (userData.avatar_url) {
+            // Extraer el nombre del archivo de la URL
+            const urlParts = userData.avatar_url.split('/');
+            const fileName = urlParts[urlParts.length - 1];
+
+            // Intentar eliminar del storage (no fallar si no existe)
+            await supabase.storage
+                .from('avatares')
+                .remove([fileName])
+                .catch(err => console.log('Archivo no encontrado o ya eliminado:', err));
+        }
+
+        // Actualizar la base de datos para quitar la URL del avatar
+        const { error: updateError } = await supabase
+            .from('usuarios')
+            .update({ avatar_url: null })
+            .eq('id', user.id);
+
+        if (updateError) throw updateError;
+
+        res.json({ message: "Avatar eliminado correctamente" });
+    } catch (err) {
+        console.error('Error al eliminar avatar:', err);
+        res.status(500).json({ error: "No se pudo eliminar el avatar" });
     }
 };

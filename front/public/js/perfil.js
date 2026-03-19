@@ -27,6 +27,33 @@ async function updateAvatar() {
     }
 }
 
+async function deleteAvatar() {
+    if (!confirm('¿Estás seguro de que quieres eliminar tu foto de perfil?')) return;
+
+    try {
+        const response = await fetch('/api/auth/delete-avatar', {
+            method: 'DELETE',
+            credentials: 'include'
+        });
+
+        if (response.ok) {
+            // Actualizar la imagen a la por defecto
+            document.getElementById('profileImage').src = '/public/img/default-avatar.png';
+            // Remover el botón de eliminar
+            const deleteBtn = document.querySelector('button[onclick="deleteAvatar()"]');
+            if (deleteBtn) deleteBtn.remove();
+            
+            alert('Foto de perfil eliminada correctamente');
+        } else {
+            const error = await response.json();
+            alert('Error: ' + (error.error || 'No se pudo eliminar la foto de perfil'));
+        }
+    } catch (err) {
+        console.error(err);
+        alert('Error al eliminar la foto de perfil');
+    }
+}
+
 function logout() {
     localStorage.removeItem('user');
     window.location.href = '/logout';
