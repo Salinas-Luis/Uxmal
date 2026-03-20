@@ -36,8 +36,8 @@ app.use('/public', express.static(path.join(__dirname, '../front/public')));
 
 app.use('/api/auth', userRoutes);
 app.use('/api/classes', authenticateToken, classRoutes);
-app.use('/api/assignments', assignmentRoutes);
-app.use('/api/posts', postRoutes);
+app.use('/api/assignments', authenticateToken, assignmentRoutes);
+app.use('/api/posts', authenticateToken, postRoutes);
 
 
 app.get('/', (req, res) => {

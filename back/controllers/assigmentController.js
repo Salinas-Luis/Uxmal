@@ -6,11 +6,12 @@ const upload = require('../config/multer');
 exports.createAssignment = async (req, res) => {
     try {
         const { titulo, descripcion, puntos_maximos, fecha_entrega, clase_id } = req.body;
+        const user = req.user || req.session?.user;
         
-        if (!req.session || !req.session.user) {
+        if (!user) {
             return res.status(401).json({ error: "No has iniciado sesión" });
         }
-        const creador_id = req.session.user.id; 
+        const creador_id = user.id; 
 
         const file = req.file; 
         let fileUrl = null;
@@ -58,8 +59,9 @@ exports.getAssignmentsByClass = async (req, res) => {
 exports.deleteAssignment = async (req, res) => {
     try {
         const { id } = req.params;
+        const user = req.user || req.session?.user;
 
-        if (!req.session || !req.session.user) {
+        if (!user) {
             return res.status(401).json({ error: "Sesión expirada o no iniciada" });
         }
 
@@ -79,14 +81,14 @@ exports.deleteAssignment = async (req, res) => {
             .eq('id', tarea.clase_id)
             .single();
 
-        const isProfesorDeClase = clase && clase.profesor_id === req.session.user.id;
+        const isProfesorDeClase = clase && clase.profesor_id === user.id;
 
         if (!isProfesorDeClase) {
             const { data: rolData } = await supabase
                 .from('inscripciones')
                 .select('rol_en_clase')
                 .eq('clase_id', tarea.clase_id)
-                .eq('estudiante_id', req.session.user.id)
+                .eq('estudiante_id', user.id)
                 .single();
 
             if (!rolData || rolData.rol_en_clase !== 'profesor') {

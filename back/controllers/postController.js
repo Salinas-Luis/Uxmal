@@ -4,11 +4,13 @@ const PostModel = require('../model/postModel');
 exports.createPost = async (req, res) => {
     try {
         const { contenido, clase_id } = req.body;
-        if (!req.session || !req.session.user) {
+        const user = req.user || req.session?.user;
+        
+        if (!user) {
             return res.status(401).json({ error: "Sesión expirada o no iniciada" });
         }
 
-        const autor_id = req.session.user.id;
+        const autor_id = user.id;
 
         const { data, error } = await PostModel.create({
             contenido,
@@ -31,7 +33,9 @@ exports.createPost = async (req, res) => {
 exports.deletePost = async (req, res) => {
     try {
         const postId = req.params.id;
-        if (!req.session || !req.session.user) {
+        const user = req.user || req.session?.user;
+        
+        if (!user) {
             return res.status(401).json({ error: "Sesión expirada o no iniciada" });
         }
 
@@ -44,14 +48,14 @@ exports.deletePost = async (req, res) => {
             .eq('id', post.clase_id)
             .single();
 
-        const isProfesorDeClase = clase && clase.profesor_id === req.session.user.id;
+        const isProfesorDeClase = clase && clase.profesor_id === user.id;
 
         if (!isProfesorDeClase) {
             const { data: rolData } = await supabase
                 .from('inscripciones')
                 .select('rol_en_clase')
                 .eq('clase_id', post.clase_id)
-                .eq('estudiante_id', req.session.user.id)
+                .eq('estudiante_id', user.id)
                 .single();
 
             if (!rolData || rolData.rol_en_clase !== 'profesor') {
