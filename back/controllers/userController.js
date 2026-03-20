@@ -68,13 +68,11 @@ exports.updateProfile = async (req, res) => {
 
         if (error) throw error;
 
-        // Actualizar la sesión con los nuevos datos
         if (req.session?.user) {
             req.session.user.nombre = nombre;
             req.session.user.apellido = apellido;
             req.session.user.email = email;
         }
-        // También actualizar req.user si viene de JWT
         if (req.user) {
             req.user.nombre = nombre;
             req.user.apellido = apellido;
@@ -154,11 +152,9 @@ exports.deleteAvatar = async (req, res) => {
 
         if (updateError) throw updateError;
 
-        // Actualizar la sesión removiendo la URL del avatar
         if (req.session?.user) {
             req.session.user.avatar_url = null;
         }
-        // También actualizar req.user si viene de JWT
         if (req.user) {
             req.user.avatar_url = null;
         }

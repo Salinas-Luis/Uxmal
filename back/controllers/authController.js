@@ -40,19 +40,16 @@ exports.login = async (req, res) => {
             email: usuario.email,
         };
 
-        // Crear JWT
         const token = jwt.sign(userData, process.env.JWT_SECRET || 'tu_clave_secreta', {
             expiresIn: '24h'
         });
 
-        // Guardar token en cookie
         res.cookie('token', token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
-            maxAge: 24 * 60 * 60 * 1000 // 24 horas
+            maxAge: 24 * 60 * 60 * 1000 
         });
 
-        // También guardar en sesión para compatibilidad
         req.session.user = userData;
 
         req.session.save((err) => {
