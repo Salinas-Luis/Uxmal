@@ -160,22 +160,42 @@ app.get('/clase/:id/rendimiento', authenticateToken, async (req, res) => {
         let studentPerformanceMap = {};
 
         if (isProfesor) {
-            const { data: tareas } = await supabase
+            const { data: tareas, error: tareasError } = await supabase
                 .from('tareas')
                 .select('id, fecha_entrega, puntos_maximos')
                 .eq('clase_id', claseId);
 
-            const { data: estudiantes } = await supabase
+            if (tareasError) throw tareasError;
+
+            const { data: estudiantesInscriptos, error: estudiantesError } = await supabase
                 .from('inscripciones')
-                .select('usuarios(id, nombre, apellido, avatar_url)')
+                .select('estudiante_id')
                 .eq('clase_id', claseId)
                 .eq('rol_en_clase', 'estudiante');
 
+            if (estudiantesError) throw estudiantesError;
+
+            let estudiantes = [];
+            if (estudiantesInscriptos && estudiantesInscriptos.length > 0) {
+                const estudianteIds = estudiantesInscriptos.map(e => e.estudiante_id);
+                
+                const { data: usuariosData, error: usuariosError } = await supabase
+                    .from('usuarios')
+                    .select('id, nombre, apellido, avatar_url')
+                    .in('id', estudianteIds);
+
+                if (usuariosError) throw usuariosError;
+
+                estudiantes = usuariosData || [];
+            }
+
             if (tareas && tareas.length > 0 && estudiantes && estudiantes.length > 0) {
-                const { data: entregas } = await supabase
+                const { data: entregas, error: entregasError } = await supabase
                     .from('entregas')
                     .select('tarea_id, estudiante_id, fecha_envio, calificacion')
                     .in('tarea_id', tareas.map(t => t.id));
+
+                if (entregasError) throw entregasError;
 
                 const totalEstudiantes = estudiantes.length;
                 const totalTareas = tareas.length;
@@ -194,8 +214,13 @@ app.get('/clase/:id/rendimiento', authenticateToken, async (req, res) => {
                 });
 
                 // Calcular rendimiento de cada estudiante
-                estudiantes.forEach(est => {
-                    const estudianteId = est.usuarios.id;
+                estudiantes.forEach(usuario => {
+                    try {
+                        if (!usuario || !usuario.id) {
+                            return;
+                        }
+                        
+                        const estudianteId = usuario.id;
                     let estudianteEntregadasAtiempo = 0;
                     let estudianteEntregadasTarde = 0;
                     let estudianteNoEntregadas = 0;
@@ -231,9 +256,9 @@ app.get('/clase/:id/rendimiento', authenticateToken, async (req, res) => {
                     });
 
                     studentPerformanceMap[estudianteId] = {
-                        nombre: est.usuarios.nombre,
-                        apellido: est.usuarios.apellido,
-                        avatar_url: est.usuarios.avatar_url,
+                        nombre: usuario.nombre || '',
+                        apellido: usuario.apellido || '',
+                        avatar_url: usuario.avatar_url,
                         entregadasAtiempo: estudianteEntregadasAtiempo,
                         entregadasTarde: estudianteEntregadasTarde,
                         noEntregadas: estudianteNoEntregadas,
@@ -249,9 +274,12 @@ app.get('/clase/:id/rendimiento', authenticateToken, async (req, res) => {
 
                     studentsList.push({
                         id: estudianteId,
-                        nombre: est.usuarios.nombre,
-                        apellido: est.usuarios.apellido
+                        nombre: usuario.nombre || '',
+                        apellido: usuario.apellido || ''
                     });
+                    } catch (err) {
+                        console.error('Error procesando estudiante:', err);
+                    }
                 });
 
                 classPerformance = {
