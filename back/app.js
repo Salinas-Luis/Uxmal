@@ -156,6 +156,9 @@ app.get('/clase/:id/rendimiento', authenticateToken, async (req, res) => {
         const isProfesor = rolData?.rol_en_clase === 'profesor';
 
         let classPerformance = null;
+        let studentsList = [];
+        let studentPerformanceMap = {};
+
         if (isProfesor) {
             const { data: tareas } = await supabase
                 .from('tareas')
@@ -164,7 +167,7 @@ app.get('/clase/:id/rendimiento', authenticateToken, async (req, res) => {
 
             const { data: estudiantes } = await supabase
                 .from('inscripciones')
-                .select('usuarios(id)')
+                .select('usuarios(id, nombre, apellido, avatar_url)')
                 .eq('clase_id', claseId)
                 .eq('rol_en_clase', 'estudiante');
 
@@ -190,28 +193,64 @@ app.get('/clase/:id/rendimiento', authenticateToken, async (req, res) => {
                     entregasMap.set(key, e);
                 });
 
-                tareas.forEach(tarea => {
-                    estudiantes.forEach(est => {
-                        const key = `${tarea.id}-${est.usuarios.id}`;
+                // Calcular rendimiento de cada estudiante
+                estudiantes.forEach(est => {
+                    const estudianteId = est.usuarios.id;
+                    let estudianteEntregadasAtiempo = 0;
+                    let estudianteEntregadasTarde = 0;
+                    let estudianteNoEntregadas = 0;
+                    let estudianteCalificaciones = 0;
+                    let estudianteCountCalificadas = 0;
+
+                    tareas.forEach(tarea => {
+                        const key = `${tarea.id}-${estudianteId}`;
                         const entrega = entregasMap.get(key);
                         
                         if (!entrega) {
+                            estudianteNoEntregadas++;
                             noEntregadas++;
                         } else {
                             const entregaDate = new Date(entrega.fecha_envio);
                             const deadlineDate = new Date(tarea.fecha_entrega);
                             
                             if (entregaDate <= deadlineDate) {
+                                estudianteEntregadasAtiempo++;
                                 entregadasAtiempo++;
                             } else {
+                                estudianteEntregadasTarde++;
                                 entregadasTarde++;
                             }
                             
                             if (entrega.calificacion !== null && entrega.calificacion !== undefined) {
+                                estudianteCalificaciones += entrega.calificacion;
+                                estudianteCountCalificadas++;
                                 totalCalificaciones += entrega.calificacion;
                                 countCalificadas++;
                             }
                         }
+                    });
+
+                    studentPerformanceMap[estudianteId] = {
+                        nombre: est.usuarios.nombre,
+                        apellido: est.usuarios.apellido,
+                        avatar_url: est.usuarios.avatar_url,
+                        entregadasAtiempo: estudianteEntregadasAtiempo,
+                        entregadasTarde: estudianteEntregadasTarde,
+                        noEntregadas: estudianteNoEntregadas,
+                        promedioCalificacion: estudianteCountCalificadas > 0 
+                            ? (estudianteCalificaciones / estudianteCountCalificadas).toFixed(2) 
+                            : '0.00',
+                        tareasEntregadas: estudianteEntregadasAtiempo + estudianteEntregadasTarde,
+                        tareasCalificadas: estudianteCountCalificadas,
+                        porcentajeEntrega: totalTareas > 0
+                            ? (((estudianteEntregadasAtiempo + estudianteEntregadasTarde) / totalTareas) * 100).toFixed(1)
+                            : 0
+                    };
+
+                    studentsList.push({
+                        id: estudianteId,
+                        nombre: est.usuarios.nombre,
+                        apellido: est.usuarios.apellido
                     });
                 });
 
@@ -233,7 +272,7 @@ app.get('/clase/:id/rendimiento', authenticateToken, async (req, res) => {
             }
         }
 
-        res.render('rendimiento', { clase, user, isProfesor, classPerformance });
+        res.render('rendimiento', { clase, user, isProfesor, classPerformance, studentsList, studentPerformanceMap });
     } catch (error) {
         console.error("Error al cargar rendimiento:", error);
         res.status(500).send("Error al cargar rendimiento");

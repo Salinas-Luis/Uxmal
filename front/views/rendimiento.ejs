@@ -138,6 +138,160 @@
                 </div>
             </div>
         </div>
+
+        <% if (isProfesor && studentsList && studentsList.length > 0) { %>
+        <div class="mb-5">
+            <h4 class="fw-bold mb-4">
+                <i class="fa-solid fa-user-chart"></i> Rendimiento Individual
+            </h4>
+
+            <div class="mb-4">
+                <label for="studentSelector" class="form-label fw-bold">Seleccionar Alumno</label>
+                <select class="form-select" id="studentSelector" onchange="actualizarRendimientoIndividual()">
+                    <option value="">-- Selecciona un alumno --</option>
+                    <% studentsList.forEach(student => { %>
+                        <option value="<%= student.id %>"><%= student.nombre %> <%= student.apellido %></option>
+                    <% }); %>
+                </select>
+            </div>
+
+            <div id="studentPerformanceSection" style="display: none;">
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <p class="text-muted small mb-1">Promedio</p>
+                                        <h3 class="mb-0 fw-bold" id="studentAverage">0.00</h3>
+                                    </div>
+                                    <div class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                        <i class="fa-solid fa-star fa-lg"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <p class="text-muted small mb-1">Entregadas</p>
+                                        <h3 class="mb-0 fw-bold" id="studentDelivered">0</h3>
+                                    </div>
+                                    <div class="bg-info text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                        <i class="fa-solid fa-check fa-lg"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <p class="text-muted small mb-1">% Entrega</p>
+                                        <h3 class="mb-0 fw-bold" id="studentDeliveryPercent">0%</h3>
+                                    </div>
+                                    <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                        <i class="fa-solid fa-percent fa-lg"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-3">
+                        <div class="card border-0 shadow-sm h-100">
+                            <div class="card-body">
+                                <div class="d-flex align-items-center justify-content-between">
+                                    <div>
+                                        <p class="text-muted small mb-1">Calificadas</p>
+                                        <h3 class="mb-0 fw-bold" id="studentGraded">0</h3>
+                                    </div>
+                                    <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                        <i class="fa-solid fa-clipboard-check fa-lg"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body">
+                                <h6 class="card-title fw-bold mb-3">Distribución de Entregas</h6>
+                                
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="small">
+                                            <span class="badge bg-success">A Tiempo</span>
+                                            <span id="studentOnTime">0</span>
+                                        </span>
+                                    </div>
+                                    <div class="progress" style="height: 8px;">
+                                        <div class="progress-bar bg-success" id="studentOnTimeBar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+
+                                <div class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="small">
+                                            <span class="badge bg-warning">Fuera de Plazo</span>
+                                            <span id="studentLate">0</span>
+                                        </span>
+                                    </div>
+                                    <div class="progress" style="height: 8px;">
+                                        <div class="progress-bar bg-warning" id="studentLateBar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="small">
+                                            <span class="badge bg-danger">No Entregadas</span>
+                                            <span id="studentNotDelivered">0</span>
+                                        </span>
+                                    </div>
+                                    <div class="progress" style="height: 8px;">
+                                        <div class="progress-bar bg-danger" id="studentNotDeliveredBar" style="width: 0%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-6">
+                        <div class="card border-0 shadow-sm">
+                            <div class="card-body">
+                                <h6 class="card-title fw-bold mb-3">Resumen</h6>
+                                
+                                <div class="list-group list-group-flush">
+                                    <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
+                                        <span class="small">Tareas Entregadas</span>
+                                        <span class="badge bg-info rounded-pill" id="studentTotalDelivered">0</span>
+                                    </div>
+                                    <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
+                                        <span class="small">Tareas No Entregadas</span>
+                                        <span class="badge bg-danger rounded-pill" id="studentTotalNotDelivered">0</span>
+                                    </div>
+                                    <div class="list-group-item px-0 py-2 d-flex justify-content-between align-items-center">
+                                        <span class="small">Tareas Calificadas</span>
+                                        <span class="badge bg-success rounded-pill" id="studentTotalGraded">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         <% } else if (!isProfesor) { %>
             <div class="alert alert-info" role="alert">
                 <i class="fa-solid fa-circle-info"></i> El rendimiento de clase solo está disponible para profesores.
@@ -146,5 +300,50 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        const studentPerformanceMap = <%- JSON.stringify(studentPerformanceMap) %>;
+
+        function actualizarRendimientoIndividual() {
+            const selector = document.getElementById('studentSelector');
+            const studentId = selector.value;
+
+            if (!studentId) {
+                document.getElementById('studentPerformanceSection').style.display = 'none';
+                return;
+            }
+
+            const performance = studentPerformanceMap[studentId];
+            if (!performance) return;
+
+            // Actualizar tarjetas principales
+            document.getElementById('studentAverage').textContent = performance.promedioCalificacion;
+            document.getElementById('studentDelivered').textContent = performance.tareasEntregadas;
+            document.getElementById('studentDeliveryPercent').textContent = performance.porcentajeEntrega + '%';
+            document.getElementById('studentGraded').textContent = performance.tareasCalificadas;
+
+            // Actualizar entregas
+            document.getElementById('studentOnTime').textContent = performance.entregadasAtiempo;
+            document.getElementById('studentLate').textContent = performance.entregadasTarde;
+            document.getElementById('studentNotDelivered').textContent = performance.noEntregadas;
+
+            // Calcular porcentajes para las barras
+            const totalTareas = performance.entregadasAtiempo + performance.entregadasTarde + performance.noEntregadas;
+            const onTimePercent = totalTareas > 0 ? (performance.entregadasAtiempo / totalTareas * 100).toFixed(1) : 0;
+            const latePercent = totalTareas > 0 ? (performance.entregadasTarde / totalTareas * 100).toFixed(1) : 0;
+            const notDeliveredPercent = totalTareas > 0 ? (performance.noEntregadas / totalTareas * 100).toFixed(1) : 0;
+
+            document.getElementById('studentOnTimeBar').style.width = onTimePercent + '%';
+            document.getElementById('studentLateBar').style.width = latePercent + '%';
+            document.getElementById('studentNotDeliveredBar').style.width = notDeliveredPercent + '%';
+
+            // Actualizar resumen
+            document.getElementById('studentTotalDelivered').textContent = performance.tareasEntregadas;
+            document.getElementById('studentTotalNotDelivered').textContent = performance.noEntregadas;
+            document.getElementById('studentTotalGraded').textContent = performance.tareasCalificadas;
+
+            // Mostrar la sección
+            document.getElementById('studentPerformanceSection').style.display = 'block';
+        }
+    </script>
 </body>
 </html>
