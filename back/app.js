@@ -100,12 +100,51 @@ app.get('/dashboard', authenticateToken, async (req, res) => {
 app.get('/clase/:id', authenticateToken, async (req, res) => {
     try {
         const claseId = req.params.id;
+        const user = req.user || req.session?.user || {};
+
+        console.log('Loading class:', claseId, 'for user:', user.id);
+
+        const { data: clase, error: claseError } = await supabase.from('clases').select('*').eq('id', claseId).single();
+        if (claseError) {
+            console.error('Error loading class:', claseError);
+            throw claseError;
+        }
+
+        const { data: posts, error: postsError } = await PostModel.getByClass(claseId);
+        if (postsError) {
+            console.error('Error loading posts:', postsError);
+            throw postsError;
+        }
+
+        const { data: rolData, error: rolError } = await supabase
+            .from('inscripciones')
+            .select('rol_en_clase')
+            .eq('clase_id', claseId)
+            .eq('estudiante_id', user.id)
+            .single();
+
+        if (rolError && rolError.code !== 'PGRST116') { 
+            console.error('Error loading role:', rolError);
+            throw rolError;
+        }
+
+        const isProfesor = rolData?.rol_en_clase === 'profesor';
+
+        console.log('Rendering class page for user:', user.id, 'isProfesor:', isProfesor);
+
+        res.render('clase', { clase, posts: posts || [], user, isProfesor });
+    } catch (error) {
+        console.error("Error al cargar la clase:", error);
+        res.status(500).send("Error al cargar la clase");
+    }
+});
+
+app.get('/clase/:id/rendimiento', authenticateToken, async (req, res) => {
+    try {
+        const claseId = req.params.id;
         const user = req.user || req.session?.user || {}; 
 
         const { data: clase } = await supabase.from('clases').select('*').eq('id', claseId).single();
-        
-        const { data: posts, error } = await PostModel.getByClass(claseId);
-        if (error) throw error;
 
         const { data: rolData } = await supabase
             .from('inscripciones')
@@ -194,10 +233,10 @@ app.get('/clase/:id', authenticateToken, async (req, res) => {
             }
         }
 
-        res.render('clase', { clase, posts: posts || [], user, isProfesor, classPerformance });
+        res.render('rendimiento', { clase, user, isProfesor, classPerformance });
     } catch (error) {
-        console.error("Error al cargar la clase:", error);
-        res.status(500).send("Error al cargar la clase");
+        console.error("Error al cargar rendimiento:", error);
+        res.status(500).send("Error al cargar rendimiento");
     }
 });
 
@@ -378,6 +417,11 @@ app.get('/logout', (req, res) => {
     });
 });
 const PORT = process.env.PORT || 3000;
-app.listen("https://uxmal-6t33.vercel.app", () => {
-    console.log(`Uxmal corriendo en https://uxmal-6t33.vercel.app`);
-});
+
+if (process.env.VERCEL) {
+    module.exports = app;
+} else {
+    app.listen(PORT, () => {
+        console.log(`Uxmal corriendo en http://localhost:${PORT}`);
+    });
+}
