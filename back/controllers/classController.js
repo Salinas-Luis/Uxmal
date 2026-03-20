@@ -195,3 +195,67 @@ exports.uploadBanner = async (req, res) => {
         res.status(500).json({ error: 'No se pudo subir el banner' });
     }
 };
+
+exports.deleteClass = async (req, res) => {
+    try {
+        const { classId } = req.params;
+        const user = req.user || req.session?.user;
+
+        if (!user) {
+            return res.status(401).json({ error: "Sesión expirada o no iniciada" });
+        }
+
+        const { data: clase, error: claseError } = await supabase
+            .from('clases')
+            .select('profesor_id')
+            .eq('id', classId)
+            .single();
+
+        if (claseError || !clase) {
+            return res.status(404).json({ error: 'Clase no encontrada' });
+        }
+
+        if (clase.profesor_id !== user.id) {
+            return res.status(403).json({ error: 'Solo el profesor puede eliminar la clase' });
+        }
+
+        const { data: tareas } = await supabase
+            .from('tareas')
+            .select('id')
+            .eq('clase_id', classId);
+
+        if (tareas && tareas.length > 0) {
+            await supabase
+                .from('entregas')
+                .delete()
+                .in('tarea_id', tareas.map(t => t.id));
+        }
+
+        await supabase
+            .from('tareas')
+            .delete()
+            .eq('clase_id', classId);
+
+        await supabase
+            .from('anuncios')
+            .delete()
+            .eq('clase_id', classId);
+
+        await supabase
+            .from('inscripciones')
+            .delete()
+            .eq('clase_id', classId);
+
+        const { error: deleteError } = await supabase
+            .from('clases')
+            .delete()
+            .eq('id', classId);
+
+        if (deleteError) throw deleteError;
+
+        res.json({ message: 'Clase eliminada correctamente' });
+    } catch (err) {
+        console.error('Error al eliminar clase:', err);
+        res.status(500).json({ error: 'No se pudo eliminar la clase' });
+    }
+};

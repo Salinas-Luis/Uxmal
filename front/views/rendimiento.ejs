@@ -23,6 +23,12 @@
                     <li class="nav-item"><a class="nav-link active" href="#">Rendimiento de clase</a></li>
                 </ul>
             </div>
+
+            <% if (isProfesor) { %>
+                <button class="btn btn-outline-danger btn-sm" onclick="eliminarClase('<%= clase.id %>')">
+                    <i class="fa-solid fa-trash"></i> Eliminar clase
+                </button>
+            <% } %>
         </div>
     </nav>
 
@@ -305,10 +311,15 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         const studentPerformanceMap = <%= JSON.stringify(studentPerformanceMap || {}) %>;
+        
+        console.log('studentPerformanceMap loaded:', studentPerformanceMap);
 
         function actualizarRendimientoIndividual() {
             const selector = document.getElementById('studentSelector');
             const studentId = selector.value;
+            
+            console.log('Selected student ID:', studentId);
+            console.log('Available students:', Object.keys(studentPerformanceMap));
 
             if (!studentId) {
                 document.getElementById('studentPerformanceSection').style.display = 'none';
@@ -316,7 +327,12 @@
             }
 
             const performance = studentPerformanceMap[studentId];
-            if (!performance) return;
+            console.log('Performance data:', performance);
+            
+            if (!performance) {
+                alert('No se encontraron datos para este alumno');
+                return;
+            }
 
             // Actualizar tarjetas principales
             document.getElementById('studentAverage').textContent = performance.promedioCalificacion;
@@ -346,6 +362,30 @@
 
             // Mostrar la sección
             document.getElementById('studentPerformanceSection').style.display = 'block';
+        }
+
+        async function eliminarClase(claseId) {
+            if (!confirm('¿Estás seguro de que deseas eliminar esta clase? Esta acción no se puede deshacer.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/classes/${claseId}`, {
+                    method: 'DELETE',
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    alert('Clase eliminada correctamente');
+                    window.location.href = '/dashboard';
+                } else {
+                    const error = await response.json().catch(() => ({}));
+                    alert('Error al eliminar la clase: ' + (error.error || response.statusText));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error al eliminar la clase');
+            }
         }
     </script>
 </body>
