@@ -138,6 +138,7 @@
                 </div>
             </div>
         </div>
+        <% } %>
 
         <% if (isProfesor && studentsList && studentsList.length > 0) { %>
         <div class="mb-5">
@@ -292,7 +293,9 @@
                 </div>
             </div>
         </div>
-        <% } else if (!isProfesor) { %>
+        <% } %>
+
+        <% if (!isProfesor) { %>
             <div class="alert alert-info" role="alert">
                 <i class="fa-solid fa-circle-info"></i> El rendimiento de clase solo está disponible para profesores.
             </div>
@@ -301,7 +304,7 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        const studentPerformanceMap = <%- JSON.stringify(studentPerformanceMap) %>;
+        const studentPerformanceMap = <%= JSON.stringify(studentPerformanceMap || {}) %>;
 
         function actualizarRendimientoIndividual() {
             const selector = document.getElementById('studentSelector');

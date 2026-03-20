@@ -299,7 +299,14 @@ app.get('/clase/:id/rendimiento', authenticateToken, async (req, res) => {
             }
         }
 
-        res.render('rendimiento', { clase, user, isProfesor, classPerformance, studentsList, studentPerformanceMap });
+        res.render('rendimiento', { 
+            clase, 
+            user, 
+            isProfesor, 
+            classPerformance: classPerformance || null, 
+            studentsList: studentsList || [], 
+            studentPerformanceMap: studentPerformanceMap || {} 
+        });
     } catch (error) {
         console.error("Error al cargar rendimiento:", error);
         res.status(500).send("Error al cargar rendimiento");
