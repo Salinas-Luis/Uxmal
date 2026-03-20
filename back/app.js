@@ -299,13 +299,15 @@ app.get('/clase/:id/rendimiento', authenticateToken, async (req, res) => {
             }
         }
 
+        const studentPerformanceMapJson = JSON.stringify(studentPerformanceMap || {});
+
         res.render('rendimiento', { 
             clase, 
             user, 
             isProfesor, 
             classPerformance: classPerformance || null, 
             studentsList: studentsList || [], 
-            studentPerformanceMap: studentPerformanceMap || {} 
+            studentPerformanceMapJson
         });
     } catch (error) {
         console.error("Error al cargar rendimiento:", error);
