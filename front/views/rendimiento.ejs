@@ -309,7 +309,7 @@
     </main>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script type="application/json" id="studentPerformanceData"><%= studentPerformanceMapJson %></script>
+    <script type="application/json" id="studentPerformanceData"><%- studentPerformanceMapJson %></script>
     <script>
         const studentPerformanceMap = JSON.parse(document.getElementById('studentPerformanceData').textContent) || {};
         
