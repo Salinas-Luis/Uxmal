@@ -213,70 +213,69 @@ app.get('/clase/:id/rendimiento', authenticateToken, async (req, res) => {
                     entregasMap.set(key, e);
                 });
 
-                // Calcular rendimiento de cada estudiante
                 estudiantes.forEach(usuario => {
+                    if (!usuario || !usuario.id) {
+                        return;
+                    }
+                    
                     try {
-                        if (!usuario || !usuario.id) {
-                            return;
-                        }
-                        
                         const estudianteId = usuario.id;
-                    let estudianteEntregadasAtiempo = 0;
-                    let estudianteEntregadasTarde = 0;
-                    let estudianteNoEntregadas = 0;
-                    let estudianteCalificaciones = 0;
-                    let estudianteCountCalificadas = 0;
+                        let estudianteEntregadasAtiempo = 0;
+                        let estudianteEntregadasTarde = 0;
+                        let estudianteNoEntregadas = 0;
+                        let estudianteCalificaciones = 0;
+                        let estudianteCountCalificadas = 0;
 
-                    tareas.forEach(tarea => {
-                        const key = `${tarea.id}-${estudianteId}`;
-                        const entrega = entregasMap.get(key);
-                        
-                        if (!entrega) {
-                            estudianteNoEntregadas++;
-                            noEntregadas++;
-                        } else {
-                            const entregaDate = new Date(entrega.fecha_envio);
-                            const deadlineDate = new Date(tarea.fecha_entrega);
+                        tareas.forEach(tarea => {
+                            const key = `${tarea.id}-${estudianteId}`;
+                            const entrega = entregasMap.get(key);
                             
-                            if (entregaDate <= deadlineDate) {
-                                estudianteEntregadasAtiempo++;
-                                entregadasAtiempo++;
+                            if (!entrega) {
+                                estudianteNoEntregadas++;
+                                noEntregadas++;
                             } else {
-                                estudianteEntregadasTarde++;
-                                entregadasTarde++;
+                                const entregaDate = new Date(entrega.fecha_envio);
+                                const deadlineDate = new Date(tarea.fecha_entrega);
+                                
+                                if (entregaDate <= deadlineDate) {
+                                    estudianteEntregadasAtiempo++;
+                                    entregadasAtiempo++;
+                                } else {
+                                    estudianteEntregadasTarde++;
+                                    entregadasTarde++;
+                                }
+                                
+                                if (entrega.calificacion !== null && entrega.calificacion !== undefined) {
+                                    estudianteCalificaciones += entrega.calificacion;
+                                    estudianteCountCalificadas++;
+                                    totalCalificaciones += entrega.calificacion;
+                                    countCalificadas++;
+                                }
                             }
-                            
-                            if (entrega.calificacion !== null && entrega.calificacion !== undefined) {
-                                estudianteCalificaciones += entrega.calificacion;
-                                estudianteCountCalificadas++;
-                                totalCalificaciones += entrega.calificacion;
-                                countCalificadas++;
-                            }
-                        }
-                    });
+                        });
 
-                    studentPerformanceMap[estudianteId] = {
-                        nombre: usuario.nombre || '',
-                        apellido: usuario.apellido || '',
-                        avatar_url: usuario.avatar_url,
-                        entregadasAtiempo: estudianteEntregadasAtiempo,
-                        entregadasTarde: estudianteEntregadasTarde,
-                        noEntregadas: estudianteNoEntregadas,
-                        promedioCalificacion: estudianteCountCalificadas > 0 
-                            ? (estudianteCalificaciones / estudianteCountCalificadas).toFixed(2) 
-                            : '0.00',
-                        tareasEntregadas: estudianteEntregadasAtiempo + estudianteEntregadasTarde,
-                        tareasCalificadas: estudianteCountCalificadas,
-                        porcentajeEntrega: totalTareas > 0
-                            ? (((estudianteEntregadasAtiempo + estudianteEntregadasTarde) / totalTareas) * 100).toFixed(1)
-                            : 0
-                    };
+                        studentPerformanceMap[estudianteId] = {
+                            nombre: usuario.nombre || '',
+                            apellido: usuario.apellido || '',
+                            avatar_url: usuario.avatar_url,
+                            entregadasAtiempo: estudianteEntregadasAtiempo,
+                            entregadasTarde: estudianteEntregadasTarde,
+                            noEntregadas: estudianteNoEntregadas,
+                            promedioCalificacion: estudianteCountCalificadas > 0 
+                                ? (estudianteCalificaciones / estudianteCountCalificadas).toFixed(2) 
+                                : '0.00',
+                            tareasEntregadas: estudianteEntregadasAtiempo + estudianteEntregadasTarde,
+                            tareasCalificadas: estudianteCountCalificadas,
+                            porcentajeEntrega: totalTareas > 0
+                                ? (((estudianteEntregadasAtiempo + estudianteEntregadasTarde) / totalTareas) * 100).toFixed(1)
+                                : 0
+                        };
 
-                    studentsList.push({
-                        id: estudianteId,
-                        nombre: usuario.nombre || '',
-                        apellido: usuario.apellido || ''
-                    });
+                        studentsList.push({
+                            id: estudianteId,
+                            nombre: usuario.nombre || '',
+                            apellido: usuario.apellido || ''
+                        });
                     } catch (err) {
                         console.error('Error procesando estudiante:', err);
                     }
