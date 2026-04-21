@@ -367,17 +367,19 @@ app.get('/tarea/:id', authenticateToken, async (req, res) => {
         let alumnosConEstado = null;
 
         if (rol === 'profesor') {
-            const { data: allEntregas } = await supabase
-                .from('entregas')
-                .select('*, estudiante:usuarios(nombre, apellido)')
-                .eq('tarea_id', tareaId);
-            entregas = allEntregas || [];
-
             const { data: inscritos } = await supabase
                 .from('inscripciones')
                 .select('usuarios(*)')
                 .eq('clase_id', tarea.clase_id)
                 .eq('rol_en_clase', 'estudiante');
+
+            const { data: allEntregas } = await supabase
+                .from('entregas')
+                .select('*, estudiante:usuarios(nombre, apellido)')
+                .eq('tarea_id', tareaId);
+            
+            const estudiantesInscritos = (inscritos || []).map(ins => ins.usuarios.id);
+            entregas = (allEntregas || []).filter(e => estudiantesInscritos.includes(e.estudiante_id));
 
             alumnosConEstado = (inscritos || []).map(ins => {
                 const entrega = (entregas || []).find(e => e.estudiante_id === ins.usuarios.id);
