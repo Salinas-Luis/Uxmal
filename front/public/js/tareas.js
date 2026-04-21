@@ -7,12 +7,16 @@ async function publishAssignment(claseId) {
 
     if (!title) return alert("El título es obligatorio");
 
+    const rubricaCheckboxes = document.querySelectorAll('input[name="rubricaIds"]:checked');
+    const rubricaIds = Array.from(rubricaCheckboxes).map(input => input.value);
+
     const formData = new FormData();
     formData.append('titulo', title);
     formData.append('descripcion', instructions);
     formData.append('puntos_maximos', points);
     formData.append('fecha_entrega', dueDate);
     formData.append('clase_id', claseId);
+    formData.append('rubrica_ids', JSON.stringify(rubricaIds));
     
     if (fileInput.files[0]) {
         formData.append('archivo_guia', fileInput.files[0]);

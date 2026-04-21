@@ -1,11 +1,12 @@
 const AssignmentModel = require('../model/assigmentModel');
 const SubmissionModel = require('../model/submissionModel');
+const RubricModel = require('../model/rubricModel');
 const supabase = require('../config/db');
 const upload = require('../config/multer');
 
 exports.createAssignment = async (req, res) => {
     try {
-        const { titulo, descripcion, puntos_maximos, fecha_entrega, clase_id } = req.body;
+        const { titulo, descripcion, puntos_maximos, fecha_entrega, clase_id, rubrica_ids } = req.body;
         const user = req.user || req.session?.user;
         
         if (!user) {
@@ -30,7 +31,7 @@ exports.createAssignment = async (req, res) => {
             fileUrl = publicUrl.publicUrl;
         }
 
-        const { error: dbError } = await AssignmentModel.create({
+        const { data: createdAssignment, error: dbError } = await AssignmentModel.create({
             titulo,
             descripcion,
             puntos_maximos: parseInt(puntos_maximos) || 100,
@@ -41,6 +42,23 @@ exports.createAssignment = async (req, res) => {
         });
 
         if (dbError) throw dbError;
+
+        const tareaId = createdAssignment?.[0]?.id;
+        let rubricaIds = [];
+
+        if (rubrica_ids) {
+            try {
+                rubricaIds = Array.isArray(rubrica_ids) ? rubrica_ids : JSON.parse(rubrica_ids);
+            } catch (parseError) {
+                rubricaIds = typeof rubrica_ids === 'string' ? rubrica_ids.split(',').map(id => id.trim()).filter(Boolean) : [];
+            }
+        }
+
+        if (tareaId && Array.isArray(rubricaIds) && rubricaIds.length > 0) {
+            for (const rubricaId of rubricaIds) {
+                await RubricModel.assignRubricToTask(tareaId, rubricaId);
+            }
+        }
 
         res.status(201).json({ message: "Tarea creada correctamente" });
     } catch (err) {

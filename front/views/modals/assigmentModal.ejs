@@ -26,6 +26,26 @@
                             <label class="form-label small fw-bold">Adjuntar material (PDF/Imagen)</label>
                             <input type="file" id="taskFile" name="archivo_guia" class="form-control" accept=".pdf,.jpg,.png">
                         </div>
+                        <div class="mb-3">
+                            <label class="form-label small fw-bold">Rúbricas estándar</label>
+                            <div class="border rounded p-3 bg-light" style="max-height: 220px; overflow-y: auto;">
+                                <% if (rubricas && rubricas.length > 0) { %>
+                                    <% rubricas.forEach(rubrica => { %>
+                                        <div class="form-check mb-2">
+                                            <input class="form-check-input" type="checkbox" value="<%= rubrica.id %>" id="rubrica_<%= rubrica.id %>" name="rubricaIds">
+                                            <label class="form-check-label" for="rubrica_<%= rubrica.id %>">
+                                                <strong><%= rubrica.criterio %></strong> - <%= rubrica.puntos_maximos %> pts
+                                            </label>
+                                            <% if (rubrica.descripcion) { %>
+                                                <div class="small text-muted ms-4"><%= rubrica.descripcion %></div>
+                                            <% } %>
+                                        </div>
+                                    <% }) %>
+                                <% } else { %>
+                                    <p class="small text-muted mb-0">No hay rúbricas estandarizadas disponibles.</p>
+                                <% } %>
+                            </div>
+                        </div>
                     </div>
                 </form>
             </div>

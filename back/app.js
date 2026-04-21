@@ -329,6 +329,11 @@ app.get('/clase/:id/tareas', authenticateToken, async (req, res) => {
             .eq('clase_id', claseId)
             .order('fecha_creacion', { ascending: false });
 
+        const { data: rubricas } = await supabase
+            .from('rubricas')
+            .select('*')
+            .order('orden', { ascending: true });
+
         const { data: rolData } = await supabase
             .from('inscripciones')
             .select('rol_en_clase')
@@ -338,7 +343,13 @@ app.get('/clase/:id/tareas', authenticateToken, async (req, res) => {
 
         const isProfesor = rolData?.rol_en_clase === 'profesor';
 
-        res.render('tareas', { clase, tareas: tareas || [], user, isProfesor });
+        res.render('tareas', {
+            clase,
+            tareas: tareas || [],
+            rubricas: rubricas || [],
+            user,
+            isProfesor
+        });
     } catch (error) {
         res.status(500).send("Error al cargar tareas");
     }
