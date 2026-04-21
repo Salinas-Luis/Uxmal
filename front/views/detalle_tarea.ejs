@@ -110,7 +110,11 @@
                         
                         <% if (entrega) { %>
                             <div class="alert alert-success small">Tarea entregada</div>
-                            <a href="<%= entrega.archivo_entrega_url %>" target="_blank" class="btn btn-outline-secondary w-100 mb-2">Ver mi entrega</a>                            <% if (entrega.calificacion !== null && entrega.calificacion !== undefined) { %>
+                            <% if (entrega.archivo_entrega_url) { %>
+                                <a href="<%= entrega.archivo_entrega_url %>" target="_blank" class="btn btn-outline-secondary w-100 mb-2">Ver mi entrega</a>
+                            <% } %>
+                            <button type="button" class="btn btn-outline-danger w-100" onclick="cancelSubmission('<%= entrega.id %>')">Anular entrega</button>
+                            <% if (entrega.calificacion !== null && entrega.calificacion !== undefined) { %>
                                 <div class="mt-2 p-3 bg-light rounded">
                                     <strong>Calificación: <%= entrega.calificacion %> / <%= tarea.puntos_maximos %> puntos</strong>
                                     <% if (entrega.comentario_profesor) { %>
@@ -139,8 +143,7 @@
                                     <label for="comentarioAlumno" class="form-label">Comentario privado (opcional)</label>
                                     <textarea class="form-control" id="comentarioAlumno" rows="3" placeholder="Añade un comentario privado para tu profesor..."></textarea>
                                 </div>
-                                <button type="button" class="btn btn-primary w-100 py-2" onclick="submitWork('<%= tarea.id %>')">Marcar como entregada</button>
-                            <button type="button" class="btn btn-outline-primary w-100 py-2 mt-2" onclick="submitWorkWithoutFile('<%= tarea.id %>')">Entregar sin archivo</button>
+                                <button type="button" class="btn btn-primary w-100 py-2" onclick="submitTask('<%= tarea.id %>')">Entregar tarea</button>
                             </form>
                         <% } %>
                     </div>

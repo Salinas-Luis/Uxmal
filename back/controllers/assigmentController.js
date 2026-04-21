@@ -157,3 +157,46 @@ exports.gradeSubmission = async (req, res) => {
         res.status(500).json({ error: "No se pudo guardar la calificación" });
     }
 };
+
+exports.cancelSubmission = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const user = req.user || req.session?.user;
+
+        if (!user) {
+            return res.status(401).json({ error: "Sesión expirada o no iniciada" });
+        }
+
+        // Verificar que la entrega pertenece al usuario actual
+        const { data: entrega } = await supabase
+            .from('entregas')
+            .select('estudiante_id, calificacion')
+            .eq('id', id)
+            .single();
+
+        if (!entrega) {
+            return res.status(404).json({ error: "Entrega no encontrada" });
+        }
+
+        if (entrega.estudiante_id !== user.id) {
+            return res.status(403).json({ error: "No tienes permiso para anular esta entrega" });
+        }
+
+        // No permitir anular si ya tiene calificación
+        if (entrega.calificacion !== null && entrega.calificacion !== undefined) {
+            return res.status(400).json({ error: "No puedes anular una entrega que ya ha sido calificada" });
+        }
+
+        const { error: deleteError } = await supabase
+            .from('entregas')
+            .delete()
+            .eq('id', id);
+
+        if (deleteError) throw deleteError;
+
+        res.json({ message: "Entrega anulada correctamente" });
+    } catch (err) {
+        console.error("Error al anular entrega:", err);
+        res.status(500).json({ error: "No se pudo anular la entrega" });
+    }
+};
