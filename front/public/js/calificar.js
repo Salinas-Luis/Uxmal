@@ -30,23 +30,34 @@ function verDetalleEntrega(alumnoStr) {
                     `<span class="text-muted">Sin archivo adjunto</span>`
                 }
             </div>
+
+            ${alumno.entrega.comentario_alumno ? `
+                <h6 class="fw-bold">Comentario del alumno:</h6>
+                <div class="border-start border-info rounded p-3 bg-light mb-3">
+                    <p class="mb-0">${alumno.entrega.comentario_alumno}</p>
+                </div>
+            ` : ''}
+
+            <h6 class="fw-bold">Comentario privado del profesor:</h6>
+            <textarea id="comentarioProfesor" class="form-control mb-3" rows="3" placeholder="Escribe tu comentario privado para el alumno...">${alumno.entrega.comentario_profesor || ''}</textarea>
         </div>
     `;
 }
 
 async function guardarNota(entregaId) {
     const calificacion = document.getElementById('notaInput').value;
+    const comentario_profesor = document.getElementById('comentarioProfesor')?.value || '';
 
     try {
         const response = await fetch(`/api/assignments/grade/${entregaId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            body: JSON.stringify({ calificacion })
+            body: JSON.stringify({ calificacion, comentario_profesor })
         });
 
         if (response.ok) {
-            alert("Calificación guardada");
+            alert("Calificación y comentario guardados");
             location.reload();
         }
     } catch (err) {

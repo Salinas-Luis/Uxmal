@@ -6,11 +6,13 @@ document.getElementById('submissionFile')?.addEventListener('change', function(e
 
 async function submitWork(tareaId) {
     const fileInput = document.getElementById('submissionFile');
+    const comentario = document.getElementById('comentarioAlumno')?.value || '';
     const user = JSON.parse(localStorage.getItem('user'));
 
     const formData = new FormData();
     formData.append('tarea_id', tareaId);
     formData.append('estudiante_id', user.id);
+    formData.append('comentario_alumno', comentario);
     if (fileInput.files[0]) {
         formData.append('archivo_entrega', fileInput.files[0]);
     }
@@ -34,11 +36,13 @@ async function submitWork(tareaId) {
 }
 
 async function submitWorkWithoutFile(tareaId) {
+    const comentario = document.getElementById('comentarioAlumno')?.value || '';
     const user = JSON.parse(localStorage.getItem('user'));
 
     const formData = new FormData();
     formData.append('tarea_id', tareaId);
     formData.append('estudiante_id', user.id);
+    formData.append('comentario_alumno', comentario);
 
     try {
         const response = await fetch('/api/assignments/submit', {

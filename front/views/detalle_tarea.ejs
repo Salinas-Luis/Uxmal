@@ -111,20 +111,33 @@
                         <% if (entrega) { %>
                             <div class="alert alert-success small">Tarea entregada</div>
                             <a href="<%= entrega.archivo_entrega_url %>" target="_blank" class="btn btn-outline-secondary w-100 mb-2">Ver mi entrega</a>                            <% if (entrega.calificacion !== null && entrega.calificacion !== undefined) { %>
-                                <div class="mt-2">
+                                <div class="mt-2 p-3 bg-light rounded">
                                     <strong>Calificación: <%= entrega.calificacion %> / <%= tarea.puntos_maximos %> puntos</strong>
                                     <% if (entrega.comentario_profesor) { %>
-                                        <p class="mb-0">Comentario del profesor: <%= entrega.comentario_profesor %></p>
+                                        <div class="mt-2 p-2 bg-white border-start border-primary rounded">
+                                            <small class="text-muted d-block">Comentario del profesor:</small>
+                                            <p class="mb-0 mt-1"><%= entrega.comentario_profesor %></p>
+                                        </div>
                                     <% } %>
+                                </div>
+                            <% } %>
+                            <% if (entrega.comentario_alumno) { %>
+                                <div class="mt-3 p-2 bg-light border-start border-info rounded">
+                                    <small class="text-muted d-block">Tu comentario:</small>
+                                    <p class="mb-0 mt-1"><%= entrega.comentario_alumno %></p>
                                 </div>
                             <% } %>                        <% } else { %>
                             <form id="submissionForm">
                                 <div class="mb-3">
                                     <label class="btn btn-outline-primary w-100 py-3 border-dashed">
                                         <i class="fa-solid fa-plus me-2"></i> Añadir o crear
-                                        <input type="file" id="submissionFile" hidden required>
+                                        <input type="file" id="submissionFile" hidden>
                                     </label>
                                     <div id="fileNameDisplay" class="small text-muted mt-2 text-center"></div>
+                                </div>
+                                <div class="mb-3">
+                                    <label for="comentarioAlumno" class="form-label">Comentario privado (opcional)</label>
+                                    <textarea class="form-control" id="comentarioAlumno" rows="3" placeholder="Añade un comentario privado para tu profesor..."></textarea>
                                 </div>
                                 <button type="button" class="btn btn-primary w-100 py-2" onclick="submitWork('<%= tarea.id %>')">Marcar como entregada</button>
                             <button type="button" class="btn btn-outline-primary w-100 py-2 mt-2" onclick="submitWorkWithoutFile('<%= tarea.id %>')">Entregar sin archivo</button>
