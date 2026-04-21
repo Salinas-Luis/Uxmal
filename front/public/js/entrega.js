@@ -9,7 +9,6 @@ async function submitTask(tareaId) {
     const comentario = document.getElementById('comentarioAlumno')?.value || '';
     const user = JSON.parse(localStorage.getItem('user'));
 
-    // Si no hay archivo, pedir confirmación
     if (!fileInput.files[0]) {
         const confirmSubmit = confirm('No has seleccionado un archivo. ¿Estás seguro de que deseas entregar la tarea sin archivo?');
         if (!confirmSubmit) {

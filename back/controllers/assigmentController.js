@@ -167,7 +167,6 @@ exports.cancelSubmission = async (req, res) => {
             return res.status(401).json({ error: "Sesión expirada o no iniciada" });
         }
 
-        // Verificar que la entrega pertenece al usuario actual
         const { data: entrega } = await supabase
             .from('entregas')
             .select('estudiante_id, calificacion')
@@ -182,7 +181,6 @@ exports.cancelSubmission = async (req, res) => {
             return res.status(403).json({ error: "No tienes permiso para anular esta entrega" });
         }
 
-        // No permitir anular si ya tiene calificación
         if (entrega.calificacion !== null && entrega.calificacion !== undefined) {
             return res.status(400).json({ error: "No puedes anular una entrega que ya ha sido calificada" });
         }

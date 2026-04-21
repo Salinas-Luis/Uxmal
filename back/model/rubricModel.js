@@ -5,7 +5,6 @@ class RubricModel {
         const { data, error } = await supabase
             .from('rubricas')
             .insert([{
-                tarea_id: rubricData.tarea_id,
                 criterio: rubricData.criterio,
                 descripcion: rubricData.descripcion || '',
                 puntos_maximos: rubricData.puntos_maximos,
@@ -14,11 +13,21 @@ class RubricModel {
             .select();
         return { data, error };
     }
-
-    static async getByTaskId(tareaId) {
+    static async getAll() {
         const { data, error } = await supabase
             .from('rubricas')
             .select('*')
+            .order('orden', { ascending: true });
+        return { data, error };
+    }
+
+    static async getByTaskId(tareaId) {
+        const { data, error } = await supabase
+            .from('tarea_rubricas')
+            .select(`
+                *,
+                rubricas:rubrica_id (id, criterio, descripcion, puntos_maximos)
+            `)
             .eq('tarea_id', tareaId)
             .order('orden', { ascending: true });
         return { data, error };
@@ -53,6 +62,37 @@ class RubricModel {
             .delete()
             .eq('id', id);
         return { error };
+    }
+
+    static async assignRubricToTask(tareaId, rubricaId, orden = 0) {
+        const { data, error } = await supabase
+            .from('tarea_rubricas')
+            .insert([{
+                tarea_id: tareaId,
+                rubrica_id: rubricaId,
+                orden: orden
+            }])
+            .select();
+        return { data, error };
+    }
+
+    static async removeRubricFromTask(tareaId, rubricaId) {
+        const { error } = await supabase
+            .from('tarea_rubricas')
+            .delete()
+            .eq('tarea_id', tareaId)
+            .eq('rubrica_id', rubricaId);
+        return { error };
+    }
+
+    static async updateTaskRubricOrder(tareaId, rubricaId, orden) {
+        const { data, error } = await supabase
+            .from('tarea_rubricas')
+            .update({ orden })
+            .eq('tarea_id', tareaId)
+            .eq('rubrica_id', rubricaId)
+            .select();
+        return { data, error };
     }
 
     static async gradeRubric(entregaId, rubricaId, puntosObtenidos) {
