@@ -3,6 +3,10 @@ const router = express.Router();
 const assignmentController = require('../controllers/assigmentController');
 const upload = require('../config/multer'); 
 
+router.get('/pending/my-assignments', assignmentController.getPendingAssignments);
+
+router.get('/submissions/my-history', assignmentController.getStudentSubmissions);
+
 router.get('/class/:claseId', assignmentController.getAssignmentsByClass);
 
 router.delete('/:id', assignmentController.deleteAssignment);

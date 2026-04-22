@@ -6,12 +6,114 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://kit.fontawesome.com/101326ea39.js" crossorigin="anonymous"></script>
     <link rel="stylesheet" href="/public/style.css">
+    <style>
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            width: 250px;
+            background-color: #f8f9fa;
+            border-right: 1px solid #dee2e6;
+            padding-top: 70px;
+            transform: translateX(-100%);
+            transition: transform 0.3s ease;
+            z-index: 1040;
+        }
+
+        .sidebar.show {
+            transform: translateX(0);
+        }
+
+        .sidebar-menu {
+            list-style: none;
+            padding: 20px 0;
+            margin: 0;
+        }
+
+        .sidebar-menu li {
+            margin: 0;
+        }
+
+        .sidebar-menu a {
+            display: block;
+            padding: 12px 20px;
+            color: #495057;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            border-left: 3px solid transparent;
+        }
+
+        .sidebar-menu a:hover,
+        .sidebar-menu a.active {
+            background-color: #e9ecef;
+            color: #1a73e8;
+            border-left-color: #1a73e8;
+        }
+
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        .main-content {
+            margin-top: 0;
+            transition: margin-left 0.3s ease;
+        }
+
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            z-index: 1030;
+        }
+
+        .overlay.show {
+            display: block;
+        }
+
+        .task-card {
+            border-left: 4px solid #1a73e8;
+            padding: 15px;
+            margin-bottom: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+
+        .task-card.entregado {
+            border-left-color: #28a745;
+            opacity: 0.7;
+        }
+
+        .submission-card {
+            padding: 15px;
+            margin-bottom: 10px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+            border-left: 4px solid #17a2b8;
+        }
+
+        .submission-card.calificado {
+            border-left-color: #28a745;
+        }
+
+        .calendar-container {
+            max-width: 100%;
+        }
+    </style>
 </head>
 <body class="bg-light">
 
     <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top">
         <div class="container-fluid">
-            <button class="btn btn-light me-2"><i class="fa-solid fa-bars"></i></button>
+            <button class="btn btn-light me-2" id="sidebarToggle"><i class="fa-solid fa-bars"></i></button>
             <a class="navbar-brand fw-bold" href="/dashboard">MaxGrade</a>
             
             <div class="ms-auto d-flex align-items-center">
@@ -49,53 +151,95 @@
         </div>
     </nav>
 
-    <main class="container py-4">
-        <div class="row" id="classContainer">
-            <% if (clases && clases.length > 0) { %>
-                <% clases.forEach(clase => { %>
-                    <div class="col-md-4 col-lg-3 mb-4">
-                        <div class="card h-100 shadow-sm border-0 class-card">
-                            <div class="card-header text-white p-3 position-relative" 
-                                 style="background-image: url('<%= clase.portada_url || '' %>'); 
-                                         background-color: #1a73e8; 
-                                         background-size: cover; 
-                                         background-position: center;
-                                         height: 100px;
-                                         overflow: hidden;">
-                                <% if (clase.portada_url) { %>
-                                    <div style="background: rgba(0,0,0,0.5); position: absolute; top: 0; left: 0; right: 0; bottom: 0;"></div>
-                                <% } %>
-                                <div class="position-relative" style="z-index: 1;">
-                                    <h5 class="card-title mb-0"><%= clase.nombre_clase %></h5>
-                                    <p class="small opacity-75"><%= clase.seccion %></p>
+    <div class="overlay" id="sidebarOverlay"></div>
+
+    <aside class="sidebar" id="sidebar">
+        <ul class="sidebar-menu">
+            <li><a href="#" data-section="classes" class="sidebar-link active"><i class="fa-solid fa-book me-2"></i>Mis clases</a></li>
+            <li><a href="#" data-section="calendar" class="sidebar-link"><i class="fa-solid fa-calendar me-2"></i>Calendario</a></li>
+            <li><a href="#" data-section="submissions" class="sidebar-link"><i class="fa-solid fa-check-circle me-2"></i>Mis trabajos</a></li>
+        </ul>
+    </aside>
+
+    <main class="main-content container py-4">
+        <div class="content-section active" id="classes-section">
+            <div class="row" id="classContainer">
+                <% if (clases && clases.length > 0) { %>
+                    <% clases.forEach(clase => { %>
+                        <div class="col-md-4 col-lg-3 mb-4">
+                            <div class="card h-100 shadow-sm border-0 class-card">
+                                <div class="card-header text-white p-3 position-relative" 
+                                     style="background-image: url('<%= clase.portada_url || '' %>'); 
+                                             background-color: #1a73e8; 
+                                             background-size: cover; 
+                                             background-position: center;
+                                             height: 100px;
+                                             overflow: hidden;">
+                                    <% if (clase.portada_url) { %>
+                                        <div style="background: rgba(0,0,0,0.5); position: absolute; top: 0; left: 0; right: 0; bottom: 0;"></div>
+                                    <% } %>
+                                    <div class="position-relative" style="z-index: 1;">
+                                        <h5 class="card-title mb-0"><%= clase.nombre_clase %></h5>
+                                        <p class="small opacity-75"><%= clase.seccion %></p>
+                                    </div>
+                                    <% if (clase.isProfesor) { %>
+                                        <label for="bannerInput<%= clase.id %>" 
+                                               class="btn btn-sm btn-light rounded-circle position-absolute top-0 end-0 m-2"
+                                               style="z-index: 2; cursor: pointer;">
+                                            <i class="fa-solid fa-image"></i>
+                                            <input type="file" 
+                                                   id="bannerInput<%= clase.id %>" 
+                                                   hidden 
+                                                   accept="image/*"
+                                                   onchange="uploadBanner('<%= clase.id %>', event)">
+                                        </label>
+                                    <% } %>
                                 </div>
-                                <% if (clase.isProfesor) { %>
-                                    <label for="bannerInput<%= clase.id %>" 
-                                           class="btn btn-sm btn-light rounded-circle position-absolute top-0 end-0 m-2"
-                                           style="z-index: 2; cursor: pointer;">
-                                        <i class="fa-solid fa-image"></i>
-                                        <input type="file" 
-                                               id="bannerInput<%= clase.id %>" 
-                                               hidden 
-                                               accept="image/*"
-                                               onchange="uploadBanner('<%= clase.id %>', event)">
-                                    </label>
-                                <% } %>
-                            </div>
-                            <div class="card-body d-flex flex-column justify-content-between">
-                                <p class="card-text small text-muted">Profesor: <%= clase.profesor ? (clase.profesor.nombre + ' ' + (clase.profesor.apellido || '')) : 'No asignado' %></p>
-                                <div class="text-end">
-                                    <a href="/clase/<%= clase.id %>" class="btn btn-outline-primary btn-sm rounded-pill">Entrar</a>
+                                <div class="card-body d-flex flex-column justify-content-between">
+                                    <p class="card-text small text-muted">Profesor: <%= clase.profesor ? (clase.profesor.nombre + ' ' + (clase.profesor.apellido || '')) : 'No asignado' %></p>
+                                    <div class="text-end">
+                                        <a href="/clase/<%= clase.id %>" class="btn btn-outline-primary btn-sm rounded-pill">Entrar</a>
+                                    </div>
                                 </div>
                             </div>
                         </div>
+                    <% }) %>
+                <% } else { %>
+                    <div class="text-center mt-5">
+                        <img src="public/img/no-clases.svg" alt="Aún no tienes clases" class="mb-4 img-fluid" style="max-height: 200px; opacity: 0.6;">                    <p class="text-muted mt-3">Aún no tienes clases. ¡Crea una o únete a una!</p>
                     </div>
-                <% }) %>
-            <% } else { %>
-                <div class="text-center mt-5">
-                    <img src="public/img/no-clases.svg" alt="Aún no tienes clases" class="mb-4 img-fluid" style="max-height: 200px; opacity: 0.6;">                    <p class="text-muted mt-3">Aún no tienes clases. ¡Crea una o únete a una!</p>
+                <% } %>
+            </div>
+        </div>
+
+        <div class="content-section" id="calendar-section">
+            <div class="row">
+                <div class="col-12">
+                    <h3 class="mb-4"><i class="fa-solid fa-calendar me-2"></i>Calendario de Tareas Pendientes</h3>
+                    <div id="calendarContainer" class="calendar-container">
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            <% } %>
+            </div>
+        </div>
+
+        <div class="content-section" id="submissions-section">
+            <div class="row">
+                <div class="col-12">
+                    <h3 class="mb-4"><i class="fa-solid fa-check-circle me-2"></i>Mis Entregas</h3>
+                    <div id="submissionsContainer">
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Cargando...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </main>
 

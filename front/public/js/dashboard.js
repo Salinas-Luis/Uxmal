@@ -1,4 +1,210 @@
 
+document.addEventListener('DOMContentLoaded', function() {
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    const sidebarLinks = document.querySelectorAll('.sidebar-link');
+
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', function() {
+            sidebar.classList.toggle('show');
+            overlay.classList.toggle('show');
+        });
+    }
+
+    if (overlay) {
+        overlay.addEventListener('click', function() {
+            sidebar.classList.remove('show');
+            overlay.classList.remove('show');
+        });
+    }
+
+    sidebarLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const section = this.getAttribute('data-section');
+            
+            sidebarLinks.forEach(l => l.classList.remove('active'));
+            this.classList.add('active');
+            
+            document.querySelectorAll('.content-section').forEach(sec => {
+                sec.classList.remove('active');
+            });
+            document.getElementById(section + '-section').classList.add('active');
+            
+            if (window.innerWidth < 992) {
+                sidebar.classList.remove('show');
+                overlay.classList.remove('show');
+            }
+
+            if (section === 'calendar') {
+                loadPendingAssignments();
+            } else if (section === 'submissions') {
+                loadStudentSubmissions();
+            }
+        });
+    });
+});
+
+async function loadPendingAssignments() {
+    const container = document.getElementById('calendarContainer');
+    
+    try {
+        const response = await fetch('/api/assignments/pending/my-assignments', {
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            throw new Error('Error al cargar tareas pendientes');
+        }
+
+        const tareas = await response.json();
+
+        if (tareas.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-5">
+                    <i class="fa-solid fa-check-circle text-success" style="font-size: 3rem;"></i>
+                    <p class="text-muted mt-3">¡No hay tareas pendientes! 🎉</p>
+                </div>
+            `;
+            return;
+        }
+
+        const tareasAgrupadas = {};
+        tareas.forEach(tarea => {
+            const fecha = new Date(tarea.fecha_entrega).toLocaleDateString('es-ES', {
+                weekday: 'long',
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+            
+            if (!tareasAgrupadas[fecha]) {
+                tareasAgrupadas[fecha] = [];
+            }
+            tareasAgrupadas[fecha].push(tarea);
+        });
+
+        let html = '';
+        for (const [fecha, tareasPorFecha] of Object.entries(tareasAgrupadas)) {
+            html += `<h5 class="mt-4 mb-3"><i class="fa-solid fa-calendar-day me-2"></i>${fecha}</h5>`;
+            
+            tareasPorFecha.forEach(tarea => {
+                const horaEntrega = new Date(tarea.fecha_entrega).toLocaleTimeString('es-ES', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+
+                const claseTarea = tarea.entregado ? 'entregado' : '';
+                const iconoEntrega = tarea.entregado ? '<i class="fa-solid fa-check text-success me-2"></i>' : '';
+                
+                html += `
+                    <div class="task-card ${claseTarea}">
+                        <div class="row align-items-center">
+                            <div class="col-md-8">
+                                <h6 class="mb-1">${iconoEntrega}<strong>${tarea.titulo}</strong></h6>
+                                <p class="mb-1 small text-muted">${tarea.clases.nombre_clase} - ${tarea.clases.seccion}</p>
+                                <p class="mb-0 small text-muted">${tarea.descripcion.substring(0, 100)}...</p>
+                            </div>
+                            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                                <p class="mb-1"><strong>${horaEntrega}</strong></p>
+                                <p class="mb-0 small text-muted">Valor: ${tarea.puntos_maximos} pts</p>
+                                ${tarea.entregado ? '<span class="badge bg-success">Entregado</span>' : '<span class="badge bg-warning">Pendiente</span>'}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        container.innerHTML = html;
+    } catch (error) {
+        console.error('Error:', error);
+        container.innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fa-solid fa-exclamation-circle me-2"></i>
+                Error al cargar las tareas: ${error.message}
+            </div>
+        `;
+    }
+}
+
+async function loadStudentSubmissions() {
+    const container = document.getElementById('submissionsContainer');
+    
+    try {
+        const response = await fetch('/api/assignments/submissions/my-history', {
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            throw new Error('Error al cargar entregas');
+        }
+
+        const entregas = await response.json();
+
+        if (entregas.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-5">
+                    <i class="fa-solid fa-inbox text-muted" style="font-size: 3rem;"></i>
+                    <p class="text-muted mt-3">Aún no has entregado ningún trabajo</p>
+                </div>
+            `;
+            return;
+        }
+
+        let html = '';
+        entregas.forEach(entrega => {
+            const fechaEntrega = new Date(entrega.fecha_envio).toLocaleDateString('es-ES', {
+                weekday: 'short',
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric'
+            });
+
+            const horaEntrega = new Date(entrega.fecha_envio).toLocaleTimeString('es-ES', {
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+
+            const claseEntrega = entrega.calificacion !== null && entrega.calificacion !== undefined ? 'calificado' : '';
+            const estadoBadge = entrega.calificacion !== null && entrega.calificacion !== undefined 
+                ? `<span class="badge bg-success">Calificado: ${entrega.calificacion}/${entrega.tareas.puntos_maximos}</span>`
+                : `<span class="badge bg-info">Por calificar</span>`;
+
+            html += `
+                <div class="submission-card ${claseEntrega}">
+                    <div class="row align-items-center">
+                        <div class="col-md-8">
+                            <h6 class="mb-1"><strong>${entrega.tareas.titulo}</strong></h6>
+                            <p class="mb-1 small text-muted">${entrega.tareas.clases.nombre_clase} - ${entrega.tareas.clases.seccion}</p>
+                            <p class="mb-0 small text-muted">Entregado: ${fechaEntrega} a las ${horaEntrega}</p>
+                            ${entrega.comentario_alumno ? `<p class="mb-0 small text-muted mt-2"><em>"${entrega.comentario_alumno}"</em></p>` : ''}
+                        </div>
+                        <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                            ${estadoBadge}
+                            ${entrega.calificacion !== null && entrega.calificacion !== undefined && entrega.comentario_profesor 
+                                ? `<p class="small text-muted mt-2"><strong>Comentario:</strong> ${entrega.comentario_profesor}</p>` 
+                                : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+
+        container.innerHTML = html;
+    } catch (error) {
+        console.error('Error:', error);
+        container.innerHTML = `
+            <div class="alert alert-danger">
+                <i class="fa-solid fa-exclamation-circle me-2"></i>
+                Error al cargar las entregas: ${error.message}
+            </div>
+        `;
+    }
+}
+
 async function createClass() {
     const nombre_clase = document.getElementById('className')?.value.trim();
     const seccion = document.getElementById('classSection')?.value.trim();

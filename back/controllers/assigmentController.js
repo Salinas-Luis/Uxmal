@@ -270,3 +270,122 @@ exports.cancelSubmission = async (req, res) => {
         res.status(500).json({ error: "No se pudo anular la entrega" });
     }
 };
+
+exports.getPendingAssignments = async (req, res) => {
+    try {
+        const user = req.user || req.session?.user;
+
+        if (!user) {
+            return res.status(401).json({ error: "Sesión expirada o no iniciada" });
+        }
+
+        const { data: inscripciones, error: inscError } = await supabase
+            .from('inscripciones')
+            .select('clase_id')
+            .eq('estudiante_id', user.id);
+
+        if (inscError) throw inscError;
+
+        const claseIds = inscripciones.map(ins => ins.clase_id);
+
+        if (claseIds.length === 0) {
+            return res.json([]);
+        }
+
+        const { data: tareas, error: tareasError } = await supabase
+            .from('tareas')
+            .select(`
+                id,
+                titulo,
+                descripcion,
+                puntos_maximos,
+                fecha_entrega,
+                clase_id,
+                clases:clase_id (nombre_clase, seccion),
+                usuarios:creador_id (nombre, apellido)
+            `)
+            .in('clase_id', claseIds)
+            .gt('fecha_entrega', new Date().toISOString())
+            .order('fecha_entrega', { ascending: true });
+
+        if (tareasError) throw tareasError;
+
+        const { data: entregas, error: entregasError } = await supabase
+            .from('entregas')
+            .select('tarea_id')
+            .eq('estudiante_id', user.id);
+
+        if (entregasError) throw entregasError;
+
+        const entregasIds = entregas.map(e => e.tarea_id);
+
+        const tareasConEstado = tareas.map(tarea => ({
+            ...tarea,
+            entregado: entregasIds.includes(tarea.id)
+        }));
+
+        res.json(tareasConEstado);
+    } catch (err) {
+        console.error("Error al obtener tareas pendientes:", err);
+        res.status(500).json({ error: "No se pudieron obtener las tareas pendientes" });
+    }
+};
+
+exports.getStudentSubmissions = async (req, res) => {
+    try {
+        const user = req.user || req.session?.user;
+
+        if (!user) {
+            return res.status(401).json({ error: "Sesión expirada o no iniciada" });
+        }
+
+        const { data: inscripciones, error: inscError } = await supabase
+            .from('inscripciones')
+            .select('clase_id')
+            .eq('estudiante_id', user.id);
+
+        if (inscError) throw inscError;
+
+        const claseIds = inscripciones.map(ins => ins.clase_id);
+
+        if (claseIds.length === 0) {
+            return res.json([]);
+        }
+
+        const { data: entregas, error: entregasError } = await supabase
+            .from('entregas')
+            .select(`
+                id,
+                tarea_id,
+                estudiante_id,
+                archivo_entrega_url,
+                comentario_alumno,
+                fecha_envio,
+                calificacion,
+                comentario_profesor,
+                estado,
+                tareas:tarea_id (
+                    id,
+                    titulo,
+                    descripcion,
+                    puntos_maximos,
+                    fecha_entrega,
+                    clase_id,
+                    clases:clase_id (nombre_clase, seccion)
+                )
+            `)
+            .eq('estudiante_id', user.id)
+            .order('fecha_envio', { ascending: false });
+
+        if (entregasError) throw entregasError;
+
+        const entregasFiltered = entregas.filter(entrega => 
+            claseIds.includes(entrega.tareas.clase_id)
+        );
+
+        res.json(entregasFiltered);
+    } catch (err) {
+        console.error("Error al obtener entregas del estudiante:", err);
+        res.status(500).json({ error: "No se pudieron obtener las entregas" });
+    }
+};
