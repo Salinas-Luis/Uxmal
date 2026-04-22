@@ -199,7 +199,11 @@ function validateDate(dateString, mustBeFuture = true) {
         return false;
     }
     
-    const selectedDate = new Date(dateString);
+
+    const [dateOnly, timeOnly] = dateString.split('T');
+    const [year, month, day] = dateOnly.split('-');
+    const [hours, minutes] = timeOnly.split(':');
+    const selectedDate = new Date(year, month - 1, day, hours, minutes, 0);
     const now = new Date();
     
     if (mustBeFuture && selectedDate <= now) {
