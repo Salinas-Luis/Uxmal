@@ -190,21 +190,20 @@ function validateRange(value, min = 0, max = 100, fieldName = 'Este valor') {
 
 /**
  * Valida que una fecha sea válida y futura
- * @param {string} dateString - Fecha en formato YYYY-MM-DD
+ * @param {string} dateString - Fecha en formato YYYY-MM-DD o YYYY-MM-DDTHH:mm
  * @param {boolean} mustBeFuture - Si debe ser fecha futura
  */
 function validateDate(dateString, mustBeFuture = true) {
     if (!dateString) {
-        showError('Fecha requerida', 'Por favor selecciona una fecha');
+        showError('Fecha requerida', 'Por favor selecciona una fecha y hora');
         return false;
     }
     
     const selectedDate = new Date(dateString);
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const now = new Date();
     
-    if (mustBeFuture && selectedDate < today) {
-        showError('Fecha inválida', 'La fecha de entrega debe ser posterior a hoy');
+    if (mustBeFuture && selectedDate <= now) {
+        showError('Fecha inválida', 'La fecha y hora de entrega debe ser posterior a la actual');
         return false;
     }
     

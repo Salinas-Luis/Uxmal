@@ -27,7 +27,7 @@ exports.createAssignment = async (req, res) => {
             return res.status(400).json({ error: "La fecha de entrega es obligatoria" });
         }
         if (new Date(fecha_entrega) <= new Date()) {
-            return res.status(400).json({ error: "La fecha de entrega debe ser posterior a hoy" });
+            return res.status(400).json({ error: "La fecha y hora de entrega debe ser posterior a la actual" });
         }
         if (!clase_id) {
             return res.status(400).json({ error: "La clase es obligatoria" });
