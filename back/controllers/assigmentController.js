@@ -282,7 +282,8 @@ exports.getPendingAssignments = async (req, res) => {
         const { data: inscripciones, error: inscError } = await supabase
             .from('inscripciones')
             .select('clase_id')
-            .eq('estudiante_id', user.id);
+            .eq('estudiante_id', user.id)
+            .eq('rol_en_clase', 'alumno');
 
         if (inscError) throw inscError;
 
@@ -342,7 +343,8 @@ exports.getStudentSubmissions = async (req, res) => {
         const { data: inscripciones, error: inscError } = await supabase
             .from('inscripciones')
             .select('clase_id')
-            .eq('estudiante_id', user.id);
+            .eq('estudiante_id', user.id)
+            .eq('rol_en_clase', 'alumno');
 
         if (inscError) throw inscError;
 
