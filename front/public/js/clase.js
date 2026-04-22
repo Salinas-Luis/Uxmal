@@ -1,7 +1,9 @@
 async function createPost(claseId) {
-    const contenido = document.getElementById('postContent').value;
+    const contenido = document.getElementById('postContent')?.value.trim();
 
-    if (!contenido.trim()) return alert("Escribe algo antes de publicar");
+    if (!validateNotEmpty(contenido, 'El contenido')) return;
+
+    showLoading('Publicando anuncio', 'Por favor espere...');
 
     try {
         const response = await fetch('/api/posts', {
@@ -12,62 +14,85 @@ async function createPost(claseId) {
         });
 
         if (response.ok) {
+            await showSuccess('¡Anuncio publicado!', 'El anuncio ha sido publicado correctamente');
             location.reload();
         } else {
-            alert("Error al publicar");
+            showError('Error al publicar', 'No se pudo publicar el anuncio');
         }
     } catch (error) {
-        console.error("Error:", error);
-        alert("Error al publicar");
+        showError('Error de conexión', 'No se pudo conectar con el servidor');
     }
 }
 
 async function deletePost(postId) {
-    if (!confirm('¿Eliminar este anuncio?')) return;
+    showConfirm(
+        '¿Eliminar anuncio?',
+        '¿Estás seguro de que deseas eliminar este anuncio?',
+        'Sí, eliminar',
+        'Cancelar'
+    ).then(async (result) => {
+        if (!result.isConfirmed) return;
 
-    try {
-        const response = await fetch(`/api/posts/${postId}`, {
-            method: 'DELETE',
-            credentials: 'include'
-        });
+        showLoading('Eliminando anuncio', 'Por favor espere...');
 
-        if (response.ok) {
-            location.reload();
-        } else {
-            const errorData = await response.json().catch(() => null);
-            alert('No se pudo eliminar el anuncio: ' + (errorData?.error || response.statusText));
+        try {
+            const response = await fetch(`/api/posts/${postId}`, {
+                method: 'DELETE',
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                await showSuccess('Anuncio eliminado', 'El anuncio ha sido eliminado correctamente');
+                location.reload();
+            } else {
+                const errorData = await response.json().catch(() => null);
+                showError('Error al eliminar', errorData?.error || 'No se pudo eliminar el anuncio');
+            }
+        } catch (error) {
+            showError('Error de conexión', 'No se pudo conectar con el servidor');
         }
-    } catch (error) {
-        console.error(error);
-        alert('Error al eliminar el anuncio');
-    }
+    });
 }
 
 async function deleteAssignment(assignmentId) {
-    if (!confirm('¿Eliminar esta tarea?')) return;
+    showConfirm(
+        '¿Eliminar tarea?',
+        '¿Estás seguro de que deseas eliminar esta tarea? Esta acción no se puede deshacer.',
+        'Sí, eliminar',
+        'Cancelar'
+    ).then(async (result) => {
+        if (!result.isConfirmed) return;
 
-    try {
-        const response = await fetch(`/api/assignments/${assignmentId}`, {
-            method: 'DELETE',
-            credentials: 'include'
-        });
+        showLoading('Eliminando tarea', 'Por favor espere...');
 
-        if (response.ok) {
-            location.reload();
-        } else {
-            const errorData = await response.json().catch(() => null);
-            alert('No se pudo eliminar la tarea: ' + (errorData?.error || response.statusText));
+        try {
+            const response = await fetch(`/api/assignments/${assignmentId}`, {
+                method: 'DELETE',
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                await showSuccess('Tarea eliminada', 'La tarea ha sido eliminada correctamente');
+                location.reload();
+            } else {
+                const errorData = await response.json().catch(() => null);
+                showError('Error al eliminar', errorData?.error || 'No se pudo eliminar la tarea');
+            }
+        } catch (error) {
+            showError('Error de conexión', 'No se pudo conectar con el servidor');
         }
-    } catch (error) {
-        console.error(error);
-        alert('Error al eliminar la tarea');
-    }
+    });
 }
 
 async function uploadClassBanner(classId, event) {
     const file = event.target.files[0];
     
     if (!file) return;
+
+    if (!validateFileType(file, ['image/jpeg', 'image/png', 'image/gif', 'image/webp'])) return;
+    if (!validateFileSize(file, 5)) return;
+
+    showLoading('Subiendo banner', 'Por favor espere...');
 
     const formData = new FormData();
     formData.append('banner', file);
@@ -85,12 +110,11 @@ async function uploadClassBanner(classId, event) {
             if (bannerDiv) {
                 bannerDiv.style.backgroundImage = `url('${result.url}')`;
             }
-            alert('Banner actualizado correctamente');
+            await showSuccess('Banner actualizado', 'El banner se ha actualizado correctamente');
         } else {
-            alert('Error: ' + (result.error || 'No se pudo subir el banner'));
+            showError('Error al subir', result.error || 'No se pudo subir el banner');
         }
     } catch (error) {
-        console.error('Error al subir banner:', error);
-        alert('Error al subir la imagen');
+        showError('Error de conexión', 'No se pudo conectar con el servidor');
     }
 }

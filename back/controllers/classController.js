@@ -7,6 +7,26 @@ exports.createClass = async (req, res) => {
     try {
         const { nombre_clase, seccion, materia, profesor_id } = req.body;
 
+        if (!nombre_clase || nombre_clase.trim() === '') {
+            return res.status(400).json({ error: "El nombre de la clase es obligatorio" });
+        }
+        if (!seccion || seccion.trim() === '') {
+            return res.status(400).json({ error: "La sección es obligatoria" });
+        }
+        if (!profesor_id) {
+            return res.status(400).json({ error: "El profesor es obligatorio" });
+        }
+
+        const { data: profesor } = await supabase
+            .from('usuarios')
+            .select('id')
+            .eq('id', profesor_id)
+            .single();
+
+        if (!profesor) {
+            return res.status(400).json({ error: "El profesor especificado no existe" });
+        }
+
         const codigo_acceso = crypto.randomBytes(3).toString('hex'); 
 
         const { data: nuevaClase, error: errorClase } = await supabase
@@ -14,7 +34,7 @@ exports.createClass = async (req, res) => {
             .insert([{ 
                 nombre_clase, 
                 seccion, 
-                materia, 
+                materia: materia || null, 
                 profesor_id, 
                 codigo_acceso 
             }])
@@ -48,6 +68,10 @@ exports.joinClass = async (req, res) => {
         }
         const usuario_id = user.id;
 
+        if (!codigo_acceso || codigo_acceso.trim() === '') {
+            return res.status(400).json({ error: "El código de clase es obligatorio" });
+        }
+
         const { data: clase, error: claseError } = await supabase
             .from('clases')
             .select('id')
@@ -56,6 +80,17 @@ exports.joinClass = async (req, res) => {
 
         if (claseError || !clase) {
             return res.status(404).json({ error: "Código de clase no encontrado" });
+        }
+
+        const { data: existingInscripcion } = await supabase
+            .from('inscripciones')
+            .select('id')
+            .eq('clase_id', clase.id)
+            .eq('estudiante_id', usuario_id)
+            .single();
+
+        if (existingInscripcion) {
+            return res.status(400).json({ error: "Ya estás inscrito en esta clase" });
         }
 
         const { error: joinError } = await supabase

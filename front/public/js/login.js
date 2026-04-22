@@ -1,17 +1,19 @@
-document.getElementById('loginForm').addEventListener('submit', async (e) => {
+document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
     e.preventDefault();
 
-    const email = document.getElementById('email').value;
+    const email = document.getElementById('email').value.trim();
     const password = document.getElementById('password').value;
-    const errorDiv = document.getElementById('errorMessage');
     const btn = document.getElementById('loginBtn');
 
+    if (!validateNotEmpty(email, 'El correo electrónico')) return;
+    if (!validateEmail(email)) return;
+    if (!validateNotEmpty(password, 'La contraseña')) return;
+
     btn.disabled = true;
-    btn.innerText = "Verificando...";
-    errorDiv.classList.add('d-none');
+    btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Verificando...';
 
     try {
-        const response = await fetch('https://uxmal-6t33.vercel.app/api/auth/login', {
+        const response = await fetch('/api/auth/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password })
@@ -21,34 +23,15 @@ document.getElementById('loginForm').addEventListener('submit', async (e) => {
 
         if (response.ok) {
             localStorage.setItem('user', JSON.stringify(result.user));
-            window.location.href = 'https://uxmal-6t33.vercel.app/dashboard';
+            await showSuccess('¡Bienvenido!', 'Redirigiendo al dashboard...');
+            window.location.href = '/dashboard';
         } else {
-            errorDiv.textContent = result.error || "Error al iniciar sesión";
-            errorDiv.classList.remove('d-none');
+            showError('Error al iniciar sesión', result.error || 'Credenciales incorrectas');
         }
     } catch (error) {
-        errorDiv.textContent = "No se pudo conectar con el servidor";
-        errorDiv.classList.remove('d-none');
+        showError('Error de conexión', 'No se pudo conectar con el servidor');
     } finally {
         btn.disabled = false;
-        btn.innerText = "Ingresar";
+        btn.innerHTML = 'Ingresar';
     }
 });
-async function loginUser(event) {
-    event.preventDefault();
-
-    const response = await fetch('https://uxmal-6t33.vercel.app/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-    });
-
-    const result = await response.json();
-
-    if (response.ok) {
-        localStorage.setItem('user', JSON.stringify(result.user));
-        window.location.href = 'https://uxmal-6t33.vercel.app/dashboard';
-    } else {
-        alert(result.error);
-    }
-}

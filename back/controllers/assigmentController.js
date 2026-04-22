@@ -12,12 +12,35 @@ exports.createAssignment = async (req, res) => {
         if (!user) {
             return res.status(401).json({ error: "No has iniciado sesión" });
         }
-        const creador_id = user.id; 
+        const creador_id = user.id;
+
+        if (!titulo || titulo.trim() === '') {
+            return res.status(400).json({ error: "El título de la tarea es obligatorio" });
+        }
+        if (!descripcion || descripcion.trim() === '') {
+            return res.status(400).json({ error: "La descripción de la tarea es obligatoria" });
+        }
+        if (!puntos_maximos || isNaN(puntos_maximos) || puntos_maximos <= 0 || puntos_maximos > 100) {
+            return res.status(400).json({ error: "Los puntos máximos deben ser un número entre 1 y 100" });
+        }
+        if (!fecha_entrega) {
+            return res.status(400).json({ error: "La fecha de entrega es obligatoria" });
+        }
+        if (new Date(fecha_entrega) <= new Date()) {
+            return res.status(400).json({ error: "La fecha de entrega debe ser posterior a hoy" });
+        }
+        if (!clase_id) {
+            return res.status(400).json({ error: "La clase es obligatoria" });
+        }
 
         const file = req.file; 
         let fileUrl = null;
 
         if (file) {
+            if (file.size > 20 * 1024 * 1024) {
+                return res.status(400).json({ error: "El archivo no debe exceder 20MB" });
+            }
+
             const fileName = `${Date.now()}_${file.originalname}`;
             const { error: uploadError } = await supabase.storage
                 .from('material-clases') 
@@ -164,6 +187,37 @@ exports.gradeSubmission = async (req, res) => {
     try {
         const { id } = req.params;
         const { calificacion, comentario_profesor } = req.body;
+        const user = req.user || req.session?.user;
+
+        if (!user) {
+            return res.status(401).json({ error: "Sesión expirada o no iniciada" });
+        }
+
+        const { data: entrega } = await supabase
+            .from('entregas')
+            .select('tarea_id')
+            .eq('id', id)
+            .single();
+
+        if (!entrega) {
+            return res.status(404).json({ error: "Entrega no encontrada" });
+        }
+
+        const { data: tarea } = await supabase
+            .from('tareas')
+            .select('puntos_maximos')
+            .eq('id', entrega.tarea_id)
+            .single();
+
+        if (!calificacion && calificacion !== 0) {
+            return res.status(400).json({ error: "La calificación es obligatoria" });
+        }
+        if (isNaN(calificacion)) {
+            return res.status(400).json({ error: "La calificación debe ser un número" });
+        }
+        if (calificacion < 0 || calificacion > tarea.puntos_maximos) {
+            return res.status(400).json({ error: `La calificación debe estar entre 0 y ${tarea.puntos_maximos}` });
+        }
 
         const { data, error } = await SubmissionModel.grade(id, calificacion, comentario_profesor || '');
 

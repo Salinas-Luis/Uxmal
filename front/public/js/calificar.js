@@ -16,9 +16,9 @@ function verDetalleEntrega(alumnoStr) {
                 <h3>${alumno.nombre} ${alumno.apellido}</h3>
                 <div class="d-flex align-items-center">
                     <input type="number" id="notaInput" class="form-control me-2" style="width: 80px;" 
-                           value="${alumno.entrega.calificacion || ''}" placeholder="0">
+                           value="${alumno.entrega.calificacion || ''}" placeholder="0" min="0" max="${alumno.puntos_maximos_tarea}">
                     <span class="fw-bold">/ ${alumno.puntos_maximos_tarea}</span>
-                    <button class="btn btn-success ms-3" onclick="guardarNota('${alumno.entrega.id}')">Calificar</button>
+                    <button class="btn btn-success ms-3" onclick="guardarNota('${alumno.entrega.id}', ${alumno.puntos_maximos_tarea})">Calificar</button>
                 </div>
             </div>
             
@@ -44,9 +44,14 @@ function verDetalleEntrega(alumnoStr) {
     `;
 }
 
-async function guardarNota(entregaId) {
+async function guardarNota(entregaId, puntoMaximo) {
     const calificacion = document.getElementById('notaInput').value;
     const comentario_profesor = document.getElementById('comentarioProfesor')?.value || '';
+
+    if (!validateNotEmpty(calificacion, 'La calificación')) return;
+    if (!validateRange(calificacion, 0, puntoMaximo, 'La calificación')) return;
+
+    showLoading('Guardando calificación', 'Por favor espere...');
 
     try {
         const response = await fetch(`/api/assignments/grade/${entregaId}`, {
@@ -57,10 +62,12 @@ async function guardarNota(entregaId) {
         });
 
         if (response.ok) {
-            alert("Calificación y comentario guardados");
+            await showSuccess('Calificación guardada', 'La calificación y comentario han sido guardados correctamente');
             location.reload();
+        } else {
+            showError('Error al guardar', 'No se pudo guardar la calificación');
         }
     } catch (err) {
-        console.error(err);
+        showError('Error de conexión', 'No se pudo conectar con el servidor');
     }
 }

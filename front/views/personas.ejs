@@ -81,26 +81,37 @@
 </div>   
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="/public/js/swal-utils.js"></script>
     <script>
         async function removeStudent(classId, studentId, studentName) {
-            if (!confirm(`¿Dar de baja a ${studentName}?`)) return;
+            showConfirm(
+                '¿Dar de baja alumno?',
+                `¿Estás seguro de que deseas dar de baja a ${studentName}?`,
+                'Sí, dar de baja',
+                'Cancelar'
+            ).then(async (result) => {
+                if (!result.isConfirmed) return;
 
-            try {
-                const response = await fetch(`/api/classes/${classId}/students/${studentId}`, {
-                    method: 'DELETE',
-                    credentials: 'include'
-                });
+                showLoading('Dando de baja alumno', 'Por favor espere...');
 
-                if (response.ok) {
-                    location.reload();
-                } else {
-                    const errorData = await response.json().catch(() => null);
-                    alert('No se pudo dar de baja al alumno: ' + (errorData?.error || response.statusText));
+                try {
+                    const response = await fetch(`/api/classes/${classId}/students/${studentId}`, {
+                        method: 'DELETE',
+                        credentials: 'include'
+                    });
+
+                    if (response.ok) {
+                        await showSuccess('Alumno dado de baja', `${studentName} ha sido dado de baja correctamente`);
+                        location.reload();
+                    } else {
+                        const errorData = await response.json().catch(() => null);
+                        showError('Error al dar de baja', errorData?.error || 'No se pudo dar de baja al alumno');
+                    }
+                } catch (err) {
+                    showError('Error de conexión', 'No se pudo conectar con el servidor');
                 }
-            } catch (err) {
-                console.error(err);
-                alert('Error al dar de baja al alumno');
-            }
+            });
         }
     </script>
 </body>
