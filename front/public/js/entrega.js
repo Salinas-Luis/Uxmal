@@ -74,7 +74,7 @@ async function cancelSubmission(entregaId) {
 
             if (response.ok) {
                 await showSuccess('Entrega anulada', 'La entrega ha sido anulada correctamente');
-                location.reload();
+                history.back();
             } else {
                 showError('Error al anular', 'No se pudo anular la entrega');
             }
