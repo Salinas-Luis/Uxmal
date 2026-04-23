@@ -3,6 +3,7 @@ async function publishAssignment(claseId) {
     const instructions = document.getElementById('taskInstructions')?.value.trim();
     const points = document.getElementById('taskPoints')?.value;
     const dueDate = document.getElementById('taskDueDate')?.value;
+    const dueDateMexico = dueDate ? toMexicoCityDateTimeWithOffset(dueDate) : '';
     const unitId = document.getElementById('taskUnit')?.value;
     const fileInput = document.getElementById('taskFile');
 
@@ -22,7 +23,7 @@ async function publishAssignment(claseId) {
     formData.append('titulo', title);
     formData.append('descripcion', instructions);
     formData.append('puntos_maximos', points);
-    formData.append('fecha_entrega', dueDate);
+    formData.append('fecha_entrega', dueDateMexico || dueDate);
     formData.append('clase_id', claseId);
     formData.append('rubrica_ids', JSON.stringify(rubricaIds));
     if (unitId) {
@@ -156,16 +157,62 @@ async function createUnit(claseId) {
     }
 }
 
-// Cargar unidades cuando se abre el modal de crear tarea
+function getMexicoCityOffsetForDate(dateTimeLocal) {
+    const [date] = dateTimeLocal.split('T');
+    const [year, month, day] = date.split('-').map(Number);
+
+    if (month > 4 && month < 10) return '-05:00';
+    if (month < 4 || month > 10) return '-06:00';
+    if (month === 4) return day >= 5 ? '-05:00' : '-06:00';
+    if (month === 10) return day >= 25 ? '-06:00' : '-05:00';
+    return '-06:00';
+}
+
+function toMexicoCityDateTimeWithOffset(dateTimeLocal) {
+    if (!dateTimeLocal) return '';
+    const [date, time] = dateTimeLocal.split('T');
+    const offset = getMexicoCityOffsetForDate(dateTimeLocal);
+    return `${date}T${time}:00${offset}`;
+}
+
+function getMexicoCityMinDateTime() {
+    try {
+        const formatter = new Intl.DateTimeFormat('sv', {
+            timeZone: 'America/Mexico_City',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+        return formatter.format(new Date()).replace(' ', 'T');
+    } catch (error) {
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const day = String(now.getDate()).padStart(2, '0');
+        const hour = String(now.getHours()).padStart(2, '0');
+        const minute = String(now.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day}T${hour}:${minute}`;
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     const createAssignmentModal = document.getElementById('createAssignmentModal');
     if (createAssignmentModal) {
         createAssignmentModal.addEventListener('show.bs.modal', function(event) {
-            // Obtener claseId del botón que abrió el modal
             const button = event.relatedTarget;
             const claseId = button?.getAttribute('data-clase-id');
             if (claseId) {
                 loadUnitsForClass(claseId);
+                const dueDateInput = document.getElementById('taskDueDate');
+                if (dueDateInput) {
+                    const minDate = getMexicoCityMinDateTime();
+                    dueDateInput.min = minDate;
+                    if (!dueDateInput.value) {
+                        dueDateInput.value = minDate;
+                    }
+                }
             }
         });
     }
@@ -182,7 +229,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-async function editAssignment(taskId, claseId) {
+async function editAssignment(taskId, claseId, unidadId = '') {
     const response = await fetch(`/api/units/class/${claseId}`, {
         credentials: 'include'
     });
@@ -198,6 +245,7 @@ async function editAssignment(taskId, claseId) {
             option.textContent = `${unit.numero_unidad}. ${unit.nombre}`;
             selectUnit.appendChild(option);
         });
+        selectUnit.value = unidadId || '';
     }
 
     document.getElementById('editAssignmentModal').dataset.taskId = taskId;

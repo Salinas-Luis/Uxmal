@@ -4,6 +4,31 @@ const RubricModel = require('../model/rubricModel');
 const supabase = require('../config/db');
 const upload = require('../config/multer');
 
+function getMexicoCityOffset(year, month, day) {
+    if (month > 4 && month < 10) return '-05:00';
+    if (month < 4 || month > 10) return '-06:00';
+    if (month === 4) return day >= 5 ? '-05:00' : '-06:00';
+    if (month === 10) return day >= 25 ? '-06:00' : '-05:00';
+    return '-06:00';
+}
+
+function parseMexicoCityDateTime(value) {
+    if (!value) return null;
+    const normalized = value.length === 16 ? `${value}:00` : value;
+    if (/[+-]\d{2}:\d{2}$/.test(normalized) || normalized.endsWith('Z')) {
+        return new Date(normalized);
+    }
+
+    const [datePart, timePart] = normalized.split('T');
+    const [year, month, day] = datePart.split('-').map(Number);
+    const [hour, minute] = timePart.split(':').map(Number);
+
+    if ([year, month, day, hour, minute].some(n => isNaN(n))) return null;
+
+    const offset = getMexicoCityOffset(year, month, day);
+    return new Date(`${datePart}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00${offset}`);
+}
+
 exports.createAssignment = async (req, res) => {
     try {
         const { titulo, descripcion, puntos_maximos, fecha_entrega, clase_id, rubrica_ids, unidad_id } = req.body;
@@ -26,7 +51,12 @@ exports.createAssignment = async (req, res) => {
         if (!fecha_entrega) {
             return res.status(400).json({ error: "La fecha de entrega es obligatoria" });
         }
-        if (new Date(fecha_entrega) <= new Date()) {
+
+        const fechaEntregaDate = parseMexicoCityDateTime(fecha_entrega);
+        if (!fechaEntregaDate || isNaN(fechaEntregaDate.getTime())) {
+            return res.status(400).json({ error: "Fecha de entrega inválida" });
+        }
+        if (fechaEntregaDate <= new Date()) {
             return res.status(400).json({ error: "La fecha y hora de entrega debe ser posterior a la actual" });
         }
         if (!clase_id) {
@@ -58,7 +88,7 @@ exports.createAssignment = async (req, res) => {
             titulo,
             descripcion,
             puntos_maximos: parseInt(puntos_maximos) || 100,
-            fecha_entrega,
+            fecha_entrega: fechaEntregaDate.toISOString(),
             clase_id,
             creador_id, 
             archivo_guia_url: fileUrl,

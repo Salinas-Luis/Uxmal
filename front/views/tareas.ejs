@@ -76,6 +76,12 @@
                                                 <h6 class="mb-0 fw-bold"><%= tarea.titulo %></h6>
                                                 <small class="text-muted">Publicado el <%= new Date(tarea.fecha_creacion).toLocaleDateString() %></small>
                                             </div>
+                                            <div class="text-end">
+                                                <a href="/tarea/<%= tarea.id %>" class="btn btn-light btn-sm rounded-pill">Ver tarea</a>
+                                                <% if (isProfesor) { %>
+                                                    <button class="btn btn-outline-warning btn-sm rounded-pill ms-2" data-unit-id="<%= tarea.unidad_id || '' %>" onclick="editAssignment('<%= tarea.id %>', '<%= clase.id %>', this.dataset.unitId)">Mover</button>
+                                                    <button class="btn btn-outline-danger btn-sm rounded-pill ms-2" onclick="deleteAssignment('<%= tarea.id %>')">Eliminar</button>
+                                                <% } %>
                                             </div>
                                         </div>
                                     </div>
@@ -106,7 +112,7 @@
                                         <div class="text-end">
                                             <a href="/tarea/<%= tarea.id %>" class="btn btn-light btn-sm rounded-pill">Ver tarea</a>
                                             <% if (isProfesor) { %>
-                                                <button class="btn btn-outline-warning btn-sm rounded-pill ms-2" onclick="editAssignment('<%= tarea.id %>', '<%= clase.id %>')">Asignar a unidad</button>
+                                                <button class="btn btn-outline-warning btn-sm rounded-pill ms-2" data-unit-id="<%= tarea.unidad_id || '' %>" onclick="editAssignment('<%= tarea.id %>', '<%= clase.id %>', this.dataset.unitId)">Asignar a unidad</button>
                                                 <button class="btn btn-outline-danger btn-sm rounded-pill ms-2" onclick="deleteAssignment('<%= tarea.id %>')">Eliminar</button>
                                             <% } %>
                                         </div>
