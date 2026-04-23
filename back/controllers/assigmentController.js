@@ -6,7 +6,7 @@ const upload = require('../config/multer');
 
 exports.createAssignment = async (req, res) => {
     try {
-        const { titulo, descripcion, puntos_maximos, fecha_entrega, clase_id, rubrica_ids } = req.body;
+        const { titulo, descripcion, puntos_maximos, fecha_entrega, clase_id, rubrica_ids, unidad_id } = req.body;
         const user = req.user || req.session?.user;
         
         if (!user) {
@@ -61,7 +61,8 @@ exports.createAssignment = async (req, res) => {
             fecha_entrega,
             clase_id,
             creador_id, 
-            archivo_guia_url: fileUrl 
+            archivo_guia_url: fileUrl,
+            unidad_id: unidad_id || null
         });
 
         if (dbError) throw dbError;

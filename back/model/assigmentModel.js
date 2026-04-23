@@ -14,6 +14,7 @@ static async create(assignmentData) {
                     fecha_entrega: assignmentData.fecha_entrega,
                     creador_id: assignmentData.creador_id, 
                     archivo_guia_url: assignmentData.archivo_guia_url,
+                    unidad_id: assignmentData.unidad_id || null,
                     fecha_creacion: new Date()
                 }
             ])

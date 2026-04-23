@@ -3,6 +3,7 @@ async function publishAssignment(claseId) {
     const instructions = document.getElementById('taskInstructions')?.value.trim();
     const points = document.getElementById('taskPoints')?.value;
     const dueDate = document.getElementById('taskDueDate')?.value;
+    const unitId = document.getElementById('taskUnit')?.value;
     const fileInput = document.getElementById('taskFile');
 
     if (!validateNotEmpty(title, 'El título de la tarea')) return;
@@ -24,6 +25,9 @@ async function publishAssignment(claseId) {
     formData.append('fecha_entrega', dueDate);
     formData.append('clase_id', claseId);
     formData.append('rubrica_ids', JSON.stringify(rubricaIds));
+    if (unitId) {
+        formData.append('unidad_id', unitId);
+    }
     
     if (fileInput.files[0]) {
         formData.append('archivo_guia', fileInput.files[0]);
@@ -78,3 +82,93 @@ async function deleteAssignment(assignmentId) {
         }
     });
 }
+
+async function loadUnitsForClass(claseId) {
+    try {
+        const response = await fetch(`/api/units/class/${claseId}`, {
+            credentials: 'include'
+        });
+
+        if (!response.ok) {
+            console.error('Error al cargar unidades');
+            return;
+        }
+
+        const units = await response.json();
+        const selectUnit = document.getElementById('taskUnit');
+
+        if (!selectUnit) return;
+
+        // Limpiar opciones existentes (excepto la primera)
+        selectUnit.innerHTML = '<option value="">-- Sin unidad --</option>';
+
+        // Agregar las unidades
+        units.forEach(unit => {
+            const option = document.createElement('option');
+            option.value = unit.id;
+            option.textContent = `${unit.numero_unidad}. ${unit.nombre}`;
+            selectUnit.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error al cargar unidades:', error);
+    }
+}
+
+async function createUnit(claseId) {
+    const unitNumber = document.getElementById('unitNumber')?.value;
+    const unitName = document.getElementById('unitName')?.value.trim();
+    const unitDescription = document.getElementById('unitDescription')?.value.trim();
+
+    if (!validateNotEmpty(unitName, 'El nombre de la unidad')) return;
+    if (!validateRange(unitNumber, 1, 99, 'El número de unidad')) return;
+
+    showLoading('Creando unidad', 'Por favor espere...');
+
+    try {
+        const response = await fetch('/api/units', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                clase_id: claseId,
+                numero_unidad: parseInt(unitNumber),
+                nombre: unitName,
+                descripcion: unitDescription || null
+            }),
+            credentials: 'include'
+        });
+
+        if (response.ok) {
+            await showSuccess('¡Unidad creada!', 'La unidad ha sido creada correctamente');
+            // Cerrar modal
+            const modal = bootstrap.Modal.getInstance(document.getElementById('createUnitModal'));
+            modal?.hide();
+            // Limpiar formulario
+            document.getElementById('unitForm').reset();
+            // Recargar unidades
+            loadUnitsForClass(claseId);
+        } else {
+            const errorData = await response.json();
+            showError('Error al crear unidad', errorData.error || 'No se pudo crear la unidad');
+        }
+    } catch (err) {
+        console.error('Error:', err);
+        showError('Error de conexión', 'No se pudo conectar con el servidor');
+    }
+}
+
+// Cargar unidades cuando se abre el modal de crear tarea
+document.addEventListener('DOMContentLoaded', function() {
+    const createAssignmentModal = document.getElementById('createAssignmentModal');
+    if (createAssignmentModal) {
+        createAssignmentModal.addEventListener('show.bs.modal', function(event) {
+            // Obtener claseId del botón que abrió el modal
+            const button = event.relatedTarget;
+            const claseId = button?.getAttribute('data-clase-id');
+            if (claseId) {
+                loadUnitsForClass(claseId);
+            }
+        });
+    }
+});

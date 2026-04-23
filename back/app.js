@@ -7,7 +7,8 @@ const supabase = require('./config/db');
 
 const userRoutes = require('./routes/userRoutes');
 const classRoutes = require('./routes/classRoutes');
-const assignmentRoutes = require('./routes/assigmentRoutes'); 
+const assignmentRoutes = require('./routes/assigmentRoutes');
+const unitsRoutes = require('./routes/unitsRoutes');
 const rubricRoutes = require('./routes/rubricRoutes');
 const postRoutes = require('./routes/postRoutes');
 const PostModel = require('./model/postModel');
@@ -38,6 +39,7 @@ app.use('/public', express.static(path.join(__dirname, '../front/public')));
 app.use('/api/auth', userRoutes);
 app.use('/api/classes', authenticateToken, classRoutes);
 app.use('/api/assignments', authenticateToken, assignmentRoutes);
+app.use('/api/units', authenticateToken, unitsRoutes);
 app.use('/api/rubrics', authenticateToken, rubricRoutes);
 app.use('/api/posts', authenticateToken, postRoutes);
 

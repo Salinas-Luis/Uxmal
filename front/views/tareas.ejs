@@ -28,9 +28,14 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <h2 class="fw-normal">Trabajo en clase</h2>
             <% if (isProfesor) { %>
-                <button class="btn btn-primary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#createAssignmentModal">
-                    <i class="fa-solid fa-plus me-2"></i> Crear
-                </button>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#createUnitModal" data-clase-id="<%= clase.id %>">
+                        <i class="fa-solid fa-folder-plus me-2"></i> Crear unidad
+                    </button>
+                    <button class="btn btn-primary rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#createAssignmentModal" data-clase-id="<%= clase.id %>">
+                        <i class="fa-solid fa-plus me-2"></i> Crear tarea
+                    </button>
+                </div>
             <% } %>
         </div>
 

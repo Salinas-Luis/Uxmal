@@ -15,6 +15,12 @@
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
+                            <label class="form-label small fw-bold">Unidad</label>
+                            <select id="taskUnit" class="form-control">
+                                <option value="">-- Sin unidad --</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
                             <label class="form-label small fw-bold">Puntos máximos</label>
                             <input type="number" id="taskPoints" class="form-control" value="100">
                         </div>
@@ -52,6 +58,38 @@
             <div class="modal-footer border-0">
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button>
                 <button type="button" class="btn btn-primary px-4" onclick="publishAssignment('<%= clase.id %>')">Asignar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para crear unidades -->
+<div class="modal fade" id="createUnitModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header">
+                <h5 class="modal-title">Nueva Unidad</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="unitForm">
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Número de unidad</label>
+                        <input type="number" id="unitNumber" class="form-control" placeholder="Ej: 1" min="1" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Nombre de la unidad</label>
+                        <input type="text" id="unitName" class="form-control form-control-lg border-0 bg-light" placeholder="Ej: Unidad 1: Introducción" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small fw-bold">Descripción (opcional)</label>
+                        <textarea id="unitDescription" class="form-control border-0 bg-light" rows="3" placeholder="Descripción de la unidad"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary px-4" onclick="createUnit('<%= clase.id %>')">Crear unidad</button>
             </div>
         </div>
     </div>
