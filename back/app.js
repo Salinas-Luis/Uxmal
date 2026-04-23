@@ -327,9 +327,18 @@ app.get('/clase/:id/tareas', authenticateToken, async (req, res) => {
         
         const { data: tareas } = await supabase
             .from('tareas')
-            .select('*')
+            .select(`
+                *,
+                unidades:unidad_id (id, nombre, numero_unidad, descripcion)
+            `)
             .eq('clase_id', claseId)
             .order('fecha_creacion', { ascending: false });
+
+        const { data: unidades } = await supabase
+            .from('unidades')
+            .select('*')
+            .eq('clase_id', claseId)
+            .order('numero_unidad', { ascending: true });
 
         const { data: rubricas } = await supabase
             .from('rubricas')
@@ -345,14 +354,29 @@ app.get('/clase/:id/tareas', authenticateToken, async (req, res) => {
 
         const isProfesor = rolData?.rol_en_clase === 'profesor';
 
+        const tareasAgrupadas = {};
+        const tareasTotal = tareas || [];
+        
+        (unidades || []).forEach(unidad => {
+            tareasAgrupadas[unidad.id] = {
+                unidad: unidad,
+                tareas: tareasTotal.filter(t => t.unidad_id === unidad.id)
+            };
+        });
+
+        const tareassSinUnidad = tareasTotal.filter(t => !t.unidad_id);
+
         res.render('tareas', {
             clase,
-            tareas: tareas || [],
+            tareasAgrupadas,
+            tareassSinUnidad,
+            unidades: unidades || [],
             rubricas: rubricas || [],
             user,
             isProfesor
         });
     } catch (error) {
+        console.error('Error al cargar tareas:', error);
         res.status(500).send("Error al cargar tareas");
     }
 });

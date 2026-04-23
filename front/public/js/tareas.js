@@ -99,10 +99,8 @@ async function loadUnitsForClass(claseId) {
 
         if (!selectUnit) return;
 
-        // Limpiar opciones existentes (excepto la primera)
         selectUnit.innerHTML = '<option value="">-- Sin unidad --</option>';
 
-        // Agregar las unidades
         units.forEach(unit => {
             const option = document.createElement('option');
             option.value = unit.id;

@@ -22,7 +22,6 @@ exports.createUnit = async (req, res) => {
             return res.status(400).json({ error: "El número de unidad debe ser un número positivo" });
         }
 
-        // Verificar que el usuario es profesor de la clase
         const { data: clase } = await supabase
             .from('clases')
             .select('profesor_id')
@@ -35,7 +34,6 @@ exports.createUnit = async (req, res) => {
             return res.status(403).json({ error: 'No tienes permiso para crear unidades en esta clase' });
         }
 
-        // Obtener el siguiente número de orden
         const { data: lastUnit } = await supabase
             .from('unidades')
             .select('orden')
@@ -96,14 +94,12 @@ exports.updateUnit = async (req, res) => {
             return res.status(401).json({ error: "No has iniciado sesión" });
         }
 
-        // Obtener la unidad
         const { data: unit } = await UnitsModel.getById(id);
 
         if (!unit) {
             return res.status(404).json({ error: "Unidad no encontrada" });
         }
 
-        // Verificar permiso
         const { data: clase } = await supabase
             .from('clases')
             .select('profesor_id')
@@ -142,14 +138,12 @@ exports.deleteUnit = async (req, res) => {
             return res.status(401).json({ error: "No has iniciado sesión" });
         }
 
-        // Obtener la unidad
         const { data: unit } = await UnitsModel.getById(id);
 
         if (!unit) {
             return res.status(404).json({ error: "Unidad no encontrada" });
         }
 
-        // Verificar permiso
         const { data: clase } = await supabase
             .from('clases')
             .select('profesor_id')

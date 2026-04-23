@@ -40,31 +40,86 @@
         </div>
 
         <div id="assignmentsList">
-            <% if (tareas.length === 0) { %>
+            <% if (Object.keys(tareasAgrupadas).length === 0 && tareassSinUnidad.length === 0) { %>
                 <div class="text-center py-5 mt-5">
                     <img src="/public/img/tasks.png" style="width: 200px; opacity: 0.5;">
                     <p class="text-muted mt-3">Aún no se han asignado tareas aquí.</p>
                 </div>
             <% } else { %>
-                <% tareas.forEach(tarea => { %>
-                    <div class="card border-0 shadow-sm mb-3 task-item">
-                        <div class="card-body d-flex align-items-center">
-                            <div class="bg-primary text-white rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                                <i class="fa-solid fa-clipboard-list"></i>
-                            </div>
-                            <div class="flex-grow-1">
-                                <h6 class="mb-0 fw-bold"><%= tarea.titulo %></h6>
-                                <small class="text-muted">Publicado el <%= new Date(tarea.fecha_creacion).toLocaleDateString() %></small>
-                            </div>
-                            <div class="text-end">
-                                <a href="/tarea/<%= tarea.id %>" class="btn btn-light btn-sm rounded-pill">Ver tarea</a>
+
+                <% Object.keys(tareasAgrupadas).forEach(unitId => { %>
+                    <% const grupo = tareasAgrupadas[unitId]; %>
+                    <% if (grupo.tareas.length > 0) { %>
+                        <div class="mb-4">
+                            <div class="d-flex align-items-center mb-3">
+                                <i class="fa-solid fa-folder text-primary me-2" style="font-size: 1.5rem;"></i>
+                                <div>
+                                    <h5 class="mb-0 fw-bold">Unidad <%= grupo.unidad.numero_unidad %>: <%= grupo.unidad.nombre %></h5>
+                                    <% if (grupo.unidad.descripcion) { %>
+                                        <small class="text-muted"><%= grupo.unidad.descripcion %></small>
+                                    <% } %>
+                                </div>
                                 <% if (isProfesor) { %>
-                                    <button class="btn btn-outline-danger btn-sm rounded-pill ms-2" onclick="deleteAssignment('<%= tarea.id %>')">Eliminar</button>
+                                    <button class="btn btn-sm btn-outline-secondary ms-auto" title="Opciones">
+                                        <i class="fa-solid fa-ellipsis-v"></i>
+                                    </button>
                                 <% } %>
                             </div>
+                            <div class="ps-4">
+                                <% grupo.tareas.forEach(tarea => { %>
+                                    <div class="card border-0 shadow-sm mb-3 task-item">
+                                        <div class="card-body d-flex align-items-center">
+                                            <div class="bg-primary text-white rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                                <i class="fa-solid fa-clipboard-list"></i>
+                                            </div>
+                                            <div class="flex-grow-1">
+                                                <h6 class="mb-0 fw-bold"><%= tarea.titulo %></h6>
+                                                <small class="text-muted">Publicado el <%= new Date(tarea.fecha_creacion).toLocaleDateString() %></small>
+                                            </div>
+                                            <div class="text-end">
+                                                <a href="/tarea/<%= tarea.id %>" class="btn btn-light btn-sm rounded-pill">Ver tarea</a>
+                                                <% if (isProfesor) { %>
+                                                    <button class="btn btn-outline-danger btn-sm rounded-pill ms-2" onclick="deleteAssignment('<%= tarea.id %>')">Eliminar</button>
+                                                <% } %>
+                                            </div>
+                                        </div>
+                                    </div>
+                                <% }) %>
+                            </div>
+                        </div>
+                    <% } %>
+                <% }) %>
+
+                <!-- Mostrar tareas sin unidad al final -->
+                <% if (tareassSinUnidad.length > 0) { %>
+                    <div class="mb-4">
+                        <div class="d-flex align-items-center mb-3">
+                            <i class="fa-solid fa-inbox text-secondary me-2" style="font-size: 1.5rem;"></i>
+                            <h5 class="mb-0 fw-bold">Sin asignar a una unidad</h5>
+                        </div>
+                        <div class="ps-4">
+                            <% tareassSinUnidad.forEach(tarea => { %>
+                                <div class="card border-0 shadow-sm mb-3 task-item">
+                                    <div class="card-body d-flex align-items-center">
+                                        <div class="bg-secondary text-white rounded-circle me-3 d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                                            <i class="fa-solid fa-clipboard-list"></i>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <h6 class="mb-0 fw-bold"><%= tarea.titulo %></h6>
+                                            <small class="text-muted">Publicado el <%= new Date(tarea.fecha_creacion).toLocaleDateString() %></small>
+                                        </div>
+                                        <div class="text-end">
+                                            <a href="/tarea/<%= tarea.id %>" class="btn btn-light btn-sm rounded-pill">Ver tarea</a>
+                                            <% if (isProfesor) { %>
+                                                <button class="btn btn-outline-danger btn-sm rounded-pill ms-2" onclick="deleteAssignment('<%= tarea.id %>')">Eliminar</button>
+                                            <% } %>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% }) %>
                         </div>
                     </div>
-                <% }) %>
+                <% } %>
             <% } %>
         </div>
     </main>
