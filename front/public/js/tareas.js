@@ -169,4 +169,132 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    const editAssignmentModal = document.getElementById('editAssignmentModal');
+    if (editAssignmentModal) {
+        editAssignmentModal.addEventListener('show.bs.modal', function(event) {
+            const button = event.relatedTarget;
+            const claseId = button?.getAttribute('data-clase-id');
+            if (claseId) {
+                loadUnitsForEditModal(claseId);
+            }
+        });
+    }
 });
+
+async function editAssignment(taskId, claseId) {
+    const response = await fetch(`/api/units/class/${claseId}`, {
+        credentials: 'include'
+    });
+
+    const units = await response.json();
+    const selectUnit = document.getElementById('editTaskUnit');
+
+    if (selectUnit) {
+        selectUnit.innerHTML = '<option value="">-- Sin unidad --</option>';
+        units.forEach(unit => {
+            const option = document.createElement('option');
+            option.value = unit.id;
+            option.textContent = `${unit.numero_unidad}. ${unit.nombre}`;
+            selectUnit.appendChild(option);
+        });
+    }
+
+    document.getElementById('editAssignmentModal').dataset.taskId = taskId;
+
+    const modal = new bootstrap.Modal(document.getElementById('editAssignmentModal'));
+    modal.show();
+}
+
+async function loadUnitsForEditModal(claseId) {
+    try {
+        const response = await fetch(`/api/units/class/${claseId}`, {
+            credentials: 'include'
+        });
+
+        if (!response.ok) return;
+
+        const units = await response.json();
+        const selectUnit = document.getElementById('editTaskUnit');
+
+        if (!selectUnit) return;
+
+        selectUnit.innerHTML = '<option value="">-- Sin unidad --</option>';
+        units.forEach(unit => {
+            const option = document.createElement('option');
+            option.value = unit.id;
+            option.textContent = `${unit.numero_unidad}. ${unit.nombre}`;
+            selectUnit.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error al cargar unidades:', error);
+    }
+}
+
+async function saveTaskUnit() {
+    const unitId = document.getElementById('editTaskUnit')?.value;
+    const taskId = document.getElementById('editAssignmentModal')?.dataset.taskId;
+
+    if (!taskId) {
+        showError('Error', 'No se pudo identificar la tarea');
+        return;
+    }
+
+    showLoading('Actualizando tarea', 'Por favor espere...');
+
+    try {
+        const response = await fetch(`/api/assignments/${taskId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                unidad_id: unitId || null
+            }),
+            credentials: 'include'
+        });
+
+        if (response.ok) {
+            await showSuccess('¡Tarea actualizada!', 'La tarea ha sido asignada a la unidad correctamente');
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editAssignmentModal'));
+            modal?.hide();
+            location.reload();
+        } else {
+            const errorData = await response.json();
+            showError('Error', errorData.error || 'No se pudo actualizar la tarea');
+        }
+    } catch (err) {
+        console.error('Error:', err);
+        showError('Error de conexión', 'No se pudo conectar con el servidor');
+    }
+}
+
+async function deleteUnit(unitId) {
+    showConfirm(
+        '¿Eliminar unidad?',
+        '¿Estás seguro de que deseas eliminar esta unidad? Esta acción no se puede deshacer.',
+        'Sí, eliminar',
+        'Cancelar'
+    ).then(async (result) => {
+        if (!result.isConfirmed) return;
+
+        showLoading('Eliminando unidad', 'Por favor espere...');
+
+        try {
+            const response = await fetch(`/api/units/${unitId}`, {
+                method: 'DELETE',
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                await showSuccess('Unidad eliminada', 'La unidad ha sido eliminada correctamente');
+                location.reload();
+            } else {
+                const errorData = await response.json();
+                showError('Error al eliminar', errorData.error || 'No se pudo eliminar la unidad');
+            }
+        } catch (error) {
+            showError('Error de conexión', 'No se pudo conectar con el servidor');
+        }
+    });
+}

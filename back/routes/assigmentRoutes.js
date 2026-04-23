@@ -19,4 +19,6 @@ router.post('/submit', upload.single('archivo_entrega'), assignmentController.su
 
 router.put('/grade/:id', assignmentController.gradeSubmission);
 
+router.put('/:id', assignmentController.updateAssignment);
+
 module.exports = router;

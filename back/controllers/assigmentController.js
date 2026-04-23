@@ -91,6 +91,50 @@ exports.createAssignment = async (req, res) => {
     }
 };
 
+exports.updateAssignment = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { unidad_id } = req.body;
+        const user = req.user || req.session?.user;
+
+        if (!user) {
+            return res.status(401).json({ error: "No has iniciado sesión" });
+        }
+
+        const { data: tarea } = await AssignmentModel.getById(id);
+
+        if (!tarea) {
+            return res.status(404).json({ error: "Tarea no encontrada" });
+        }
+
+        const { data: clase } = await supabase
+            .from('clases')
+            .select('profesor_id')
+            .eq('id', tarea.clase_id)
+            .single();
+
+        const isProfesor = clase && clase.profesor_id === user.id;
+
+        if (!isProfesor) {
+            return res.status(403).json({ error: 'No tienes permiso para editar esta tarea' });
+        }
+
+        const { data: updatedAssignment, error: dbError } = await AssignmentModel.update(id, {
+            unidad_id: unidad_id || null
+        });
+
+        if (dbError) throw dbError;
+
+        res.json({ 
+            message: "Tarea actualizada correctamente",
+            data: updatedAssignment
+        });
+    } catch (err) {
+        console.error("Error al actualizar tarea:", err);
+        res.status(500).json({ error: "No se pudo actualizar la tarea" });
+    }
+};
+
 exports.getAssignmentsByClass = async (req, res) => {
     const { claseId } = req.params;
     const { data, error } = await AssignmentModel.getByClass(claseId);

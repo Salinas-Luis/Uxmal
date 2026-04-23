@@ -45,6 +45,18 @@ static async create(assignmentData) {
         return { data, error };
     }
 
+    static async update(id, updateData) {
+        const { data, error } = await supabase
+            .from('tareas')
+            .update({
+                unidad_id: updateData.unidad_id
+            })
+            .eq('id', id)
+            .select();
+        
+        return { data, error };
+    }
+
     static async delete(id) {
         const { error } = await supabase
             .from('tareas')
