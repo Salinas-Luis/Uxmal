@@ -392,14 +392,16 @@ exports.getPendingAssignments = async (req, res) => {
 
         if (entregasError) throw entregasError;
 
-        const entregasIds = entregas.map(e => e.tarea_id);
+        const entregasSet = new Set(entregas.map(e => String(e.tarea_id)));
 
-        const tareasConEstado = tareas.map(tarea => ({
-            ...tarea,
-            entregado: entregasIds.includes(tarea.id)
-        }));
+        const tareasPendientes = tareas
+            .filter(tarea => !entregasSet.has(String(tarea.id)))
+            .map(tarea => ({
+                ...tarea,
+                entregado: false
+            }));
 
-        res.json(tareasConEstado);
+        res.json(tareasPendientes);
     } catch (err) {
         console.error("Error al obtener tareas pendientes:", err);
         res.status(500).json({ error: "No se pudieron obtener las tareas pendientes" });
