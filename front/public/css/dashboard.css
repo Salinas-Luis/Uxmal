@@ -40,7 +40,11 @@
     height: 56px;
     object-fit: contain;
 }
-
+.navbar-logo {
+    width: 140px;
+    height: auto;
+    object-fit: contain;
+}
 .sidebar-menu {
     list-style: none;
     padding: 0;
