@@ -40,10 +40,6 @@
     height: 56px;
     object-fit: contain;
 }
-.navbar {
-    padding: 0;
-}
-
 .navbar-logo {
     width: 140px;
     height: auto;
