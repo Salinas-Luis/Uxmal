@@ -30,22 +30,18 @@
 
 
 
+.navbar {
+    padding: 0;
+}
+
 .navbar > .container-fluid {
     width: 100%;
     margin: 0;
     padding-left: 0;
     padding-right: 0;
+    position: relative;
 }
 
-.navbar-center-group {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 1.75rem;
-    width: fit-content;
-    max-width: 100%;
-    margin: 0 auto;
-}
 
 .sidebar-header {
     display: flex;
