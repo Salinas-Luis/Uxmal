@@ -381,7 +381,6 @@ exports.getPendingAssignments = async (req, res) => {
                 usuarios:creador_id (nombre, apellido)
             `)
             .in('clase_id', claseIds)
-            .gt('fecha_entrega', new Date().toISOString())
             .order('fecha_entrega', { ascending: true });
 
         if (tareasError) throw tareasError;
