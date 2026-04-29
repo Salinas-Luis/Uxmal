@@ -123,9 +123,6 @@
     color: var(--dashboard-text);
 }
 
-.main-content .container {
-    max-width: 1200px;
-}
 
 .overlay {
     position: fixed;
