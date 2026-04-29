@@ -398,6 +398,7 @@ exports.getPendingAssignments = async (req, res) => {
             .map(tarea => ({
                 ...tarea,
                 descripcion: tarea.descripcion || tarea.instrucciones || '',
+                clases: tarea.clases || { nombre_clase: 'Sin clase', seccion: '' },
                 entregado: false
             }));
 
@@ -458,12 +459,13 @@ exports.getStudentSubmissions = async (req, res) => {
         if (entregasError) throw entregasError;
 
         const entregasFiltered = entregas
-            .filter(entrega => claseIds.includes(entrega.tareas.clase_id))
+            .filter(entrega => entrega.tareas && claseIds.includes(entrega.tareas.clase_id))
             .map(entrega => ({
                 ...entrega,
                 tareas: {
                     ...entrega.tareas,
-                    descripcion: entrega.tareas.descripcion || entrega.tareas.instrucciones || ''
+                    descripcion: entrega.tareas.descripcion || entrega.tareas.instrucciones || '',
+                    clases: entrega.tareas.clases || { nombre_clase: 'Sin clase', seccion: '' }
                 }
             }));
 
