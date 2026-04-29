@@ -65,7 +65,7 @@ async function loadPendingAssignments() {
             container.innerHTML = `
                 <div class="text-center py-5">
                     <i class="fa-solid fa-check-circle text-success" style="font-size: 3rem;"></i>
-                    <p class="text-muted mt-3">¡No hay tareas pendientes! 🎉</p>
+                    <p class="text-muted mt-3">¡No hay tareas pendientes!</p>
                 </div>
             `;
             return;
