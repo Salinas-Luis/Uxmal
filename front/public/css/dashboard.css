@@ -40,6 +40,14 @@
     height: 56px;
     object-fit: contain;
 }
+
+.navbar > .container-fluid {
+    width: 100%;
+    margin: 0;
+    padding-left: 0;
+    padding-right: 0;
+}
+
 .navbar-logo {
     width: 140px;
     height: auto;
