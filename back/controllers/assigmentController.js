@@ -405,7 +405,7 @@ exports.getPendingAssignments = async (req, res) => {
         res.json(tareasPendientes);
     } catch (err) {
         console.error("Error al obtener tareas pendientes:", err);
-        res.status(500).json({ error: "No se pudieron obtener las tareas pendientes" });
+        res.status(500).json({ error: err?.message || "No se pudieron obtener las tareas pendientes" });
     }
 };
 
@@ -472,6 +472,6 @@ exports.getStudentSubmissions = async (req, res) => {
         res.json(entregasFiltered);
     } catch (err) {
         console.error("Error al obtener entregas del estudiante:", err);
-        res.status(500).json({ error: "No se pudieron obtener las entregas" });
+        res.status(500).json({ error: err?.message || "No se pudieron obtener las entregas" });
     }
 };

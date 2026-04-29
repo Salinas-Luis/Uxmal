@@ -6,6 +6,9 @@ const authenticateToken = async (req, res, next) => {
 
     if (!token) {
         if (!req.session?.user) {
+            if (req.originalUrl.startsWith('/api/')) {
+                return res.status(401).json({ error: 'No autorizado' });
+            }
             return res.redirect('/login');
         }
         return next();
@@ -29,6 +32,9 @@ const authenticateToken = async (req, res, next) => {
     } catch (err) {
         console.error("Token inválido o error al obtener usuario:", err);
         res.clearCookie('token');
+        if (req.originalUrl.startsWith('/api/')) {
+            return res.status(401).json({ error: 'Token inválido o expirado' });
+        }
         res.redirect('/login');
     }
 };
