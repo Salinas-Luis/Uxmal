@@ -45,7 +45,61 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     });
+
+    loadDashboardSummary();
 });
+
+async function loadDashboardSummary() {
+    const summary = document.getElementById('dashboardSummary');
+    if (!summary) return;
+
+    try {
+        const [pendingResponse, submissionsResponse] = await Promise.all([
+            fetch('/api/assignments/pending/my-assignments', { credentials: 'include' }),
+            fetch('/api/assignments/submissions/my-history', { credentials: 'include' })
+        ]);
+
+        const pendingData = pendingResponse.ok ? await pendingResponse.json() : [];
+        const submissionsData = submissionsResponse.ok ? await submissionsResponse.json() : [];
+
+        const pendingCount = pendingData.filter(tarea => !tarea.entregado).length;
+        const deliveredCount = submissionsData.length;
+
+        summary.innerHTML = `
+            <div class="col-md-6 col-xl-4 mb-3">
+                <div class="summary-card p-4 rounded-4 shadow-sm h-100">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div>
+                            <h5 class="mb-1">Tareas pendientes</h5>
+                            <p class="small text-muted mb-0">Revisa tus próximas entregas</p>
+                        </div>
+                        <span class="badge bg-warning text-dark fs-6">${pendingCount}</span>
+                    </div>
+                    <p class="mb-0">${pendingCount > 0 ? 'Tienes tareas por entregar. Abre el calendario para ver los detalles.' : 'No tienes tareas pendientes por ahora.'}</p>
+                </div>
+            </div>
+            <div class="col-md-6 col-xl-4 mb-3">
+                <div class="summary-card p-4 rounded-4 shadow-sm h-100">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                        <div>
+                            <h5 class="mb-1">Trabajos entregados</h5>
+                            <p class="small text-muted mb-0">Consulta tus entregas recientes</p>
+                        </div>
+                        <span class="badge bg-primary fs-6">${deliveredCount}</span>
+                    </div>
+                    <p class="mb-0">${deliveredCount > 0 ? 'Revisa tus entregas en Mis trabajos para ver su estado y calificaciones.' : 'Aún no has entregado ningún trabajo.'}</p>
+                </div>
+            </div>
+        `;
+    } catch (error) {
+        console.error('Error al cargar el resumen del dashboard:', error);
+        summary.innerHTML = `
+            <div class="col-12">
+                <div class="alert alert-warning mb-0">No se pudo cargar el resumen de tareas.</div>
+            </div>
+        `;
+    }
+}
 
 async function loadPendingAssignments() {
     const container = document.getElementById('calendarContainer');
@@ -60,8 +114,9 @@ async function loadPendingAssignments() {
         }
 
         const tareas = await response.json();
+        const tareasPendientes = tareas.filter(tarea => !tarea.entregado);
 
-        if (tareas.length === 0) {
+        if (tareasPendientes.length === 0) {
             container.innerHTML = `
                 <div class="text-center py-5">
                     <i class="fa-solid fa-check-circle text-success" style="font-size: 3rem;"></i>
@@ -72,7 +127,7 @@ async function loadPendingAssignments() {
         }
 
         const tareasAgrupadas = {};
-        tareas.forEach(tarea => {
+        tareasPendientes.forEach(tarea => {
             const fecha = new Date(tarea.fecha_entrega).toLocaleDateString('es-ES', {
                 weekday: 'long',
                 year: 'numeric',
