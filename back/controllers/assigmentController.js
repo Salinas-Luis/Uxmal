@@ -357,8 +357,7 @@ exports.getPendingAssignments = async (req, res) => {
         const { data: inscripciones, error: inscError } = await supabase
             .from('inscripciones')
             .select('clase_id')
-            .eq('estudiante_id', user.id)
-            .eq('rol_en_clase', 'alumno');
+            .eq('estudiante_id', user.id);
 
         if (inscError) throw inscError;
 
@@ -374,11 +373,11 @@ exports.getPendingAssignments = async (req, res) => {
                 id,
                 titulo,
                 descripcion,
+                instrucciones,
                 puntos_maximos,
                 fecha_entrega,
                 clase_id,
-                clases:clase_id (nombre_clase, seccion),
-                usuarios:creador_id (nombre, apellido)
+                clases:clase_id (nombre_clase, seccion)
             `)
             .in('clase_id', claseIds)
             .order('fecha_entrega', { ascending: true });
@@ -398,6 +397,7 @@ exports.getPendingAssignments = async (req, res) => {
             .filter(tarea => !entregasSet.has(String(tarea.id)))
             .map(tarea => ({
                 ...tarea,
+                descripcion: tarea.descripcion || tarea.instrucciones || '',
                 entregado: false
             }));
 
@@ -419,8 +419,7 @@ exports.getStudentSubmissions = async (req, res) => {
         const { data: inscripciones, error: inscError } = await supabase
             .from('inscripciones')
             .select('clase_id')
-            .eq('estudiante_id', user.id)
-            .eq('rol_en_clase', 'alumno');
+            .eq('estudiante_id', user.id);
 
         if (inscError) throw inscError;
 
@@ -446,6 +445,7 @@ exports.getStudentSubmissions = async (req, res) => {
                     id,
                     titulo,
                     descripcion,
+                    instrucciones,
                     puntos_maximos,
                     fecha_entrega,
                     clase_id,
@@ -457,9 +457,15 @@ exports.getStudentSubmissions = async (req, res) => {
 
         if (entregasError) throw entregasError;
 
-        const entregasFiltered = entregas.filter(entrega => 
-            claseIds.includes(entrega.tareas.clase_id)
-        );
+        const entregasFiltered = entregas
+            .filter(entrega => claseIds.includes(entrega.tareas.clase_id))
+            .map(entrega => ({
+                ...entrega,
+                tareas: {
+                    ...entrega.tareas,
+                    descripcion: entrega.tareas.descripcion || entrega.tareas.instrucciones || ''
+                }
+            }));
 
         res.json(entregasFiltered);
     } catch (err) {
