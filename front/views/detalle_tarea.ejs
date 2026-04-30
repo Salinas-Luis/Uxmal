@@ -38,7 +38,7 @@
                 </div>
 
                 <div class="mt-4">
-                    <p><%= tarea.instrucciones %></p>
+                    <p><%= tarea.descripcion || tarea.instrucciones || '' %></p>
                 </div>
 
                 <% if (tarea.archivo_guia_url) { %>

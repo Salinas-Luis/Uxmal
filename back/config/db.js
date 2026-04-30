@@ -69,7 +69,7 @@ CREATE TABLE tareas (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   clase_id UUID REFERENCES clases(id) ON DELETE CASCADE,
   titulo TEXT NOT NULL,
-  instrucciones TEXT,
+  descripcion TEXT,
   puntos_maximos INT DEFAULT 100,
   fecha_entrega TIMESTAMP WITH TIME ZONE,
   archivo_guia_url TEXT, -- PDF o material que sube el profe
