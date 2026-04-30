@@ -73,7 +73,7 @@ async function loadPendingAssignments() {
         const tareas = await response.json();
         const tareasPendientes = tareas
             .filter(tarea => !tarea.entregado)
-            .sort((a, b) => new Date(a.fecha_entrega) - new Date(b.fecha_entrega));
+            .sort((a, b) => new Date(b.fecha_entrega) - new Date(a.fecha_entrega));
 
         if (tareasPendientes.length === 0) {
             container.innerHTML = `
