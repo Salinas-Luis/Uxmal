@@ -48,6 +48,16 @@ document.addEventListener('DOMContentLoaded', function() {
 
 });
 
+function escapeHtml(text) {
+    if (text === null || text === undefined) return '';
+    return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
 async function loadPendingAssignments() {
     const container = document.getElementById('calendarContainer');
     
@@ -61,7 +71,9 @@ async function loadPendingAssignments() {
         }
 
         const tareas = await response.json();
-        const tareasPendientes = tareas.filter(tarea => !tarea.entregado);
+        const tareasPendientes = tareas
+            .filter(tarea => !tarea.entregado)
+            .sort((a, b) => new Date(a.fecha_entrega) - new Date(b.fecha_entrega));
 
         if (tareasPendientes.length === 0) {
             container.innerHTML = `
@@ -74,23 +86,29 @@ async function loadPendingAssignments() {
         }
 
         const tareasAgrupadas = {};
+        const fechaLabels = {};
         tareasPendientes.forEach(tarea => {
-            const fecha = new Date(tarea.fecha_entrega).toLocaleDateString('es-ES', {
+            const fechaObj = new Date(tarea.fecha_entrega);
+            const fechaKey = fechaObj.toISOString().slice(0, 10);
+            const fechaLabel = fechaObj.toLocaleDateString('es-ES', {
                 weekday: 'long',
                 year: 'numeric',
                 month: 'long',
                 day: 'numeric'
             });
             
-            if (!tareasAgrupadas[fecha]) {
-                tareasAgrupadas[fecha] = [];
+            if (!tareasAgrupadas[fechaKey]) {
+                tareasAgrupadas[fechaKey] = [];
+                fechaLabels[fechaKey] = fechaLabel;
             }
-            tareasAgrupadas[fecha].push(tarea);
+            tareasAgrupadas[fechaKey].push(tarea);
         });
 
         let html = '';
-        for (const [fecha, tareasPorFecha] of Object.entries(tareasAgrupadas)) {
-            html += `<h5 class="mt-4 mb-3"><i class="fa-solid fa-calendar-day me-2"></i>${fecha}</h5>`;
+        const fechasOrdenadas = Object.keys(tareasAgrupadas).sort();
+        for (const fechaKey of fechasOrdenadas) {
+            const tareasPorFecha = tareasAgrupadas[fechaKey];
+            html += `<h5 class="mt-4 mb-3"><i class="fa-solid fa-calendar-day me-2"></i>${fechaLabels[fechaKey]}</h5>`;
             
             tareasPorFecha.forEach(tarea => {
                 const horaEntrega = new Date(tarea.fecha_entrega).toLocaleTimeString('es-ES', {
@@ -100,14 +118,18 @@ async function loadPendingAssignments() {
 
                 const claseTarea = tarea.entregado ? 'entregado' : '';
                 const iconoEntrega = tarea.entregado ? '<i class="fa-solid fa-check text-success me-2"></i>' : '';
+                const tituloSeguro = escapeHtml(tarea.titulo);
+                const nombreClaseSeguro = escapeHtml(tarea.clases?.nombre_clase);
+                const seccionSeguro = escapeHtml(tarea.clases?.seccion);
+                const descripcionSeguro = escapeHtml(tarea.descripcion || '');
                 
                 html += `
                     <div class="task-card ${claseTarea}">
                         <div class="row align-items-center">
                             <div class="col-md-8">
-                                <h6 class="mb-1">${iconoEntrega}<strong>${tarea.titulo}</strong></h6>
-                                <p class="mb-1 small text-muted">${tarea.clases.nombre_clase} - ${tarea.clases.seccion}</p>
-                                <p class="mb-0 small text-muted">${tarea.descripcion.substring(0, 100)}...</p>
+                                <h6 class="mb-1">${iconoEntrega}<strong>${tituloSeguro}</strong></h6>
+                                <p class="mb-1 small text-muted">${nombreClaseSeguro} - ${seccionSeguro}</p>
+                                <p class="mb-0 small text-muted">${descripcionSeguro.substring(0, 100)}...</p>
                             </div>
                             <div class="col-md-4 text-md-end mt-3 mt-md-0">
                                 <p class="mb-1"><strong>${horaEntrega}</strong></p>
@@ -144,7 +166,8 @@ async function loadStudentSubmissions() {
             throw new Error('Error al cargar entregas');
         }
 
-        const entregas = await response.json();
+        const entregas = (await response.json())
+            .sort((a, b) => new Date(b.fecha_envio) - new Date(a.fecha_envio));
 
         if (entregas.length === 0) {
             container.innerHTML = `
@@ -170,24 +193,30 @@ async function loadStudentSubmissions() {
                 minute: '2-digit'
             });
 
+            const tituloSeguro = escapeHtml(entrega.tareas?.titulo);
+            const nombreClaseSeguro = escapeHtml(entrega.tareas?.clases?.nombre_clase);
+            const seccionSeguro = escapeHtml(entrega.tareas?.clases?.seccion);
+            const comentarioAlumnoSeguro = escapeHtml(entrega.comentario_alumno);
+            const comentarioProfesorSeguro = escapeHtml(entrega.comentario_profesor);
+            const puntosMaximosSeguro = escapeHtml(entrega.tareas?.puntos_maximos);
             const claseEntrega = entrega.calificacion !== null && entrega.calificacion !== undefined ? 'calificado' : '';
             const estadoBadge = entrega.calificacion !== null && entrega.calificacion !== undefined 
-                ? `<span class="badge bg-success">Calificado: ${entrega.calificacion}/${entrega.tareas.puntos_maximos}</span>`
+                ? `<span class="badge bg-success">Calificado: ${escapeHtml(entrega.calificacion)} / ${puntosMaximosSeguro}</span>`
                 : `<span class="badge bg-info">Por calificar</span>`;
 
             html += `
                 <div class="submission-card ${claseEntrega}">
                     <div class="row align-items-center">
                         <div class="col-md-8">
-                            <h6 class="mb-1"><strong>${entrega.tareas.titulo}</strong></h6>
-                            <p class="mb-1 small text-muted">${entrega.tareas.clases.nombre_clase} - ${entrega.tareas.clases.seccion}</p>
+                            <h6 class="mb-1"><strong>${tituloSeguro}</strong></h6>
+                            <p class="mb-1 small text-muted">${nombreClaseSeguro} - ${seccionSeguro}</p>
                             <p class="mb-0 small text-muted">Entregado: ${fechaEntrega} a las ${horaEntrega}</p>
-                            ${entrega.comentario_alumno ? `<p class="mb-0 small text-muted mt-2"><em>"${entrega.comentario_alumno}"</em></p>` : ''}
+                            ${comentarioAlumnoSeguro ? `<p class="mb-0 small text-muted mt-2"><em>"${comentarioAlumnoSeguro}"</em></p>` : ''}
                         </div>
                         <div class="col-md-4 text-md-end mt-3 mt-md-0">
                             ${estadoBadge}
                             ${entrega.calificacion !== null && entrega.calificacion !== undefined && entrega.comentario_profesor 
-                                ? `<p class="small text-muted mt-2"><strong>Comentario:</strong> ${entrega.comentario_profesor}</p>` 
+                                ? `<p class="small text-muted mt-2"><strong>Comentario:</strong> ${comentarioProfesorSeguro}</p>` 
                                 : ''}
                         </div>
                     </div>
