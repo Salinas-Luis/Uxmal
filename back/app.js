@@ -120,23 +120,166 @@ app.get('/clase/:id', authenticateToken, async (req, res) => {
             throw postsError;
         }
 
-        const { data: rolData, error: rolError } = await supabase
-            .from('inscripciones')
-            .select('rol_en_clase')
+        const { data: unidades, error: unidadesError } = await supabase
+            .from('unidades')
+            .select('*')
             .eq('clase_id', claseId)
-            .eq('estudiante_id', user.id)
-            .single();
-
-        if (rolError && rolError.code !== 'PGRST116') { 
-            console.error('Error loading role:', rolError);
-            throw rolError;
+            .order('numero_unidad', { ascending: true });
+        if (unidadesError) {
+            console.error('Error loading units:', unidadesError);
+            throw unidadesError;
         }
 
-        const isProfesor = rolData?.rol_en_clase === 'profesor';
+        const { data: rubricas, error: rubricasError } = await supabase
+            .from('rubricas')
+            .select('*')
+            .order('orden', { ascending: true });
+        if (rubricasError) {
+            console.error('Error loading rubricas:', rubricasError);
+            throw rubricasError;
+        }
+
+        const { data: inscritos, error: inscritosError } = await supabase
+            .from('inscripciones')
+            .select(`
+                rol_en_clase,
+                usuarios (id, nombre, apellido, avatar_url)
+            `)
+            .eq('clase_id', claseId);
+        if (inscritosError) {
+            console.error('Error loading class members:', inscritosError);
+            throw inscritosError;
+        }
+
+        const profesores = (inscritos || []).filter(i => i.rol_en_clase === 'profesor');
+        const alumnos = (inscritos || []).filter(i => i.rol_en_clase === 'estudiante');
+        const rolUsuarioEnClase = (inscritos || []).find(i => i.usuarios?.id === user.id)?.rol_en_clase;
+        const isProfesor = rolUsuarioEnClase === 'profesor';
+
+        let classPerformance = null;
+        let studentsList = [];
+        let studentPerformanceMap = {};
+
+        if (isProfesor) {
+            const { data: tareas, error: tareasError } = await supabase
+                .from('tareas')
+                .select('id, fecha_entrega, puntos_maximos')
+                .eq('clase_id', claseId);
+            if (tareasError) throw tareasError;
+
+            const estudiantes = (alumnos || []).map(i => i.usuarios).filter(Boolean);
+
+            if (tareas && tareas.length > 0 && estudiantes.length > 0) {
+                const { data: entregas, error: entregasError } = await supabase
+                    .from('entregas')
+                    .select('tarea_id, estudiante_id, fecha_envio, calificacion')
+                    .in('tarea_id', tareas.map(t => t.id));
+                if (entregasError) throw entregasError;
+
+                const entregasMap = new Map();
+                entregas?.forEach(e => {
+                    entregasMap.set(`${e.tarea_id}-${e.estudiante_id}`, e);
+                });
+
+                let entregadasAtiempo = 0;
+                let entregadasTarde = 0;
+                let noEntregadas = 0;
+                let totalCalificaciones = 0;
+                let countCalificadas = 0;
+
+                estudiantes.forEach(usuario => {
+                    const estudianteId = usuario.id;
+                    let estudianteEntregadasAtiempo = 0;
+                    let estudianteEntregadasTarde = 0;
+                    let estudianteNoEntregadas = 0;
+                    let estudianteCalificaciones = 0;
+                    let estudianteCountCalificadas = 0;
+
+                    tareas.forEach(tarea => {
+                        const key = `${tarea.id}-${estudianteId}`;
+                        const entrega = entregasMap.get(key);
+
+                        if (!entrega) {
+                            estudianteNoEntregadas++;
+                            noEntregadas++;
+                        } else {
+                            const entregaDate = new Date(entrega.fecha_envio);
+                            const deadlineDate = new Date(tarea.fecha_entrega);
+                            if (entregaDate <= deadlineDate) {
+                                estudianteEntregadasAtiempo++;
+                                entregadasAtiempo++;
+                            } else {
+                                estudianteEntregadasTarde++;
+                                entregadasTarde++;
+                            }
+                            if (entrega.calificacion !== null && entrega.calificacion !== undefined) {
+                                estudianteCalificaciones += entrega.calificacion;
+                                estudianteCountCalificadas++;
+                                totalCalificaciones += entrega.calificacion;
+                                countCalificadas++;
+                            }
+                        }
+                    });
+
+                    studentPerformanceMap[estudianteId] = {
+                        nombre: usuario.nombre || '',
+                        apellido: usuario.apellido || '',
+                        avatar_url: usuario.avatar_url,
+                        entregadasAtiempo: estudianteEntregadasAtiempo,
+                        entregadasTarde: estudianteEntregadasTarde,
+                        noEntregadas: estudianteNoEntregadas,
+                        promedioCalificacion: estudianteCountCalificadas > 0
+                            ? (estudianteCalificaciones / estudianteCountCalificadas).toFixed(2)
+                            : '0.00',
+                        tareasEntregadas: estudianteEntregadasAtiempo + estudianteEntregadasTarde,
+                        tareasCalificadas: estudianteCountCalificadas,
+                        porcentajeEntrega: tareas.length > 0
+                            ? (((estudianteEntregadasAtiempo + estudianteEntregadasTarde) / tareas.length) * 100).toFixed(1)
+                            : 0
+                    };
+
+                    studentsList.push({
+                        id: estudianteId,
+                        nombre: usuario.nombre || '',
+                        apellido: usuario.apellido || ''
+                    });
+                });
+
+                classPerformance = {
+                    totalEstudiantes: estudiantes.length,
+                    totalTareas: tareas.length,
+                    totalEntregas: entregadasAtiempo + entregadasTarde,
+                    entregadasAtiempo,
+                    entregadasTarde,
+                    noEntregadas,
+                    porcentajeEntrega: tareas.length * estudiantes.length > 0
+                        ? (((entregadasAtiempo + entregadasTarde) / (tareas.length * estudiantes.length)) * 100).toFixed(1)
+                        : 0,
+                    promedioCalificacion: countCalificadas > 0
+                        ? (totalCalificaciones / countCalificadas).toFixed(2)
+                        : '0.00',
+                    tareasSinCalificar: (entregadasAtiempo + entregadasTarde) - countCalificadas
+                };
+            }
+        }
+
+        const studentPerformanceMapJson = JSON.stringify(studentPerformanceMap || {});
 
         console.log('Rendering class page for user:', user.id, 'isProfesor:', isProfesor);
 
-        res.render('clase', { clase, posts: posts || [], user, isProfesor });
+        res.render('clase', {
+            clase,
+            posts: posts || [],
+            unidades: unidades || [],
+            rubricas: rubricas || [],
+            profesores: profesores || [],
+            alumnos: alumnos || [],
+            user,
+            isProfesor,
+            classPerformance,
+            studentsList,
+            studentPerformanceMapJson
+        });
     } catch (error) {
         console.error("Error al cargar la clase:", error);
         res.status(500).send("Error al cargar la clase");

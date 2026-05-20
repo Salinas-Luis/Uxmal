@@ -11,42 +11,30 @@
 <body class="bg-light">
 
     <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top">
-        <div class="container-fluid px-0 position-relative">
-            <div class="d-flex align-items-center justify-content-between w-100">
-                <div class="d-flex align-items-center">
-                    <button class="btn btn-light" id="sidebarToggle"><i class="fa-solid fa-bars"></i></button>
-                </div>
-                <a class="navbar-brand position-absolute start-50 translate-middle-x" href="/dashboard">
-                    <img src="/public/img/maxgradeplacapng.png" alt="Logo MaxGrade" class="navbar-logo">
-                </a>
-                <div class="d-flex align-items-center gap-3 justify-content-end">
-                <div class="dropdown">
-                    <button class="btn btn-light rounded-pill shadow-sm d-flex align-items-center justify-content-center p-2 px-md-3" data-bs-toggle="dropdown">
+        <div class="container-fluid px-0">
+            <div class="navbar-inner d-flex align-items-center position-relative w-100">
+                <button class="btn btn-light border-0 text-dark" id="sidebarToggle"><i class="fa-solid fa-bars"></i></button>
+                <div class="navbar-actions d-flex align-items-center gap-3 ms-auto">
+                    <a href="#" class="nav-action text-dark small d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#joinModal">
+                        <i class="fa-solid fa-link"></i>
+                        <span>Unirse a una clase</span>
+                    </a>
+                    <a href="#" class="nav-action text-dark small d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#createModal">
                         <i class="fa-solid fa-plus"></i>
-                        <span class="d-none d-md-inline ms-2">Nueva clase</span>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#joinModal">Unirse a una clase</a></li>
-                        <li><a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#createModal">Crear una clase</a></li>
-                    </ul>
-                </div>
-                <div class="dropdown">
-                    <button class="btn btn-light rounded-circle d-flex align-items-center justify-content-center shadow-sm p-0" data-bs-toggle="dropdown" style="width: 40px; height: 40px; overflow: hidden;">
-                        <% if (user && user.avatar_url) { %>
-                            <img src="<%= user.avatar_url %>" alt="Avatar" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">
-                        <% } else { %>
-                            <span class="text-primary fw-bold">
-                                <% if (user && user.nombre) { %>
-                                    <%= user.nombre.charAt(0).toUpperCase() %>
-                                <% } else { %>
-                                    ?
-                                <% } %>
-                            </span>
-                        <% } %>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end">
-                        <li><a class="dropdown-item" href="/perfil"><i class="fa-solid fa-user me-2"></i>Perfil</a></li>
-                    </ul>
+                        <span>Crea una clase</span>
+                    </a>
+                    <div class="dropdown">
+                        <button class="btn avatar-circle" data-bs-toggle="dropdown">
+                            <% if (user && user.avatar_url) { %>
+                                <img src="<%= user.avatar_url %>" alt="Avatar" class="avatar-image">
+                            <% } else { %>
+                                <span class="avatar-fallback"><%= user && user.nombre ? user.nombre.charAt(0).toUpperCase() : '?' %></span>
+                            <% } %>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end">
+                            <li><a class="dropdown-item" href="/perfil"><i class="fa-solid fa-user me-2"></i>Perfil</a></li>
+                        </ul>
+                    </div>
                 </div>
             </div>
         </div>
@@ -56,96 +44,87 @@
 
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-header">
-            <img src="/public/img/maxgradeplacapng.png" alt="Logo MaxGrade" class="sidebar-logo me-2">
+            <a href="#" class="d-flex align-items-center gap-2 text-decoration-none">
+                <img src="/public/img/maxgradeplacapng.png" alt="Logo MaxGrade" class="sidebar-logo">
+            </a>
         </div>
         <ul class="sidebar-menu">
-            <li><a href="#" data-section="classes" class="sidebar-link active"><i class="fa-solid fa-book me-2"></i>Mis clases</a></li>
-            <li><a href="#" data-section="calendar" class="sidebar-link"><i class="fa-solid fa-calendar me-2"></i>Calendario</a></li>
-            <li><a href="#" data-section="submissions" class="sidebar-link"><i class="fa-solid fa-check-circle me-2"></i>Mis trabajos</a></li>
+            <li>Realiza click en el boton deseado para ir a donde desees:</li>
+            <li><a href="#" data-section="classes" class="sidebar-link active"><i class="fa-solid fa-graduation-cap me-3"></i>Mis clases</a></li>
+            <li><a href="#" data-section="calendar" class="sidebar-link"><i class="fa-solid fa-clipboard-list me-3"></i>Tareas</a></li>
+            <li><a href="#" data-section="submissions" class="sidebar-link"><i class="fa-solid fa-clipboard-check me-3"></i>Entregadas</a></li>
         </ul>
         <div class="sidebar-footer">
-            <button class="btn btn-outline-danger w-100 rounded-pill" type="button" onclick="logout()">
-                <i class="fa-solid fa-power-off me-2"></i>Cerrar sesión
+            <button class="video-action" type="button" aria-label="Ver video">
+                <i class="fa-solid fa-play"></i>
+                <span>Click para ver el tutorial</span>
             </button>
         </div>
     </aside>
 
     <main class="main-content container py-4">
-        <section class="dashboard-hero">
-            <div class="dashboard-hero-text">
-                <h1>Bienvenido A MaxGrade</h1>
-            </div>
+        <div class="content-section active" id="classes-section">
             <% if (!clases || clases.length === 0) { %>
-            <div class="row gx-4 gy-4 dashboard-actions">
-                <div class="col-md-6">
-                    <a href="#" class="dashboard-option-card" data-bs-toggle="modal" data-bs-target="#joinModal">
-                        <div class="option-icon bg-blue">
-                            <i class="fa-solid fa-arrow-right-to-bracket"></i>
-                        </div>
-                        <h3>Únete una clase...</h3>
-                    </a>
+            <div class="empty-state-card">
+                <div class="empty-illustration" aria-hidden="true">
+                    <span class="angle angle-top"></span>
+                    <span class="angle angle-left"></span>
+                    <span class="angle angle-bottom"></span>
+                    <span class="angle-center"></span>
                 </div>
-                <div class="col-md-6">
-                    <a href="#" class="dashboard-option-card" data-bs-toggle="modal" data-bs-target="#createModal">
-                        <div class="option-icon bg-green">
-                            <i class="fa-solid fa-plus"></i>
-                        </div>
-                        <h3>Crea una clase...</h3>
-                        <p>Crea tu propia clase con nombre, materia y descripción.</p>
+                <div class="empty-copy text-center">
+                    <h2>Ups...</h2>
+                    <p>Parece que por aquí no hay nada, realiza click en los siguientes botones para crear o unirte a una clase para seguir.</p>
+                </div>
+                <div class="empty-actions">
+                    <a href="#" class="action-btn" data-bs-toggle="modal" data-bs-target="#joinModal">
+                        <i class="fa-solid fa-arrow-down-left"></i>
+                        UNIRSE A UNA CLASE
+                    </a>
+                    <a href="#" class="action-btn" data-bs-toggle="modal" data-bs-target="#createModal">
+                        <i class="fa-solid fa-arrow-down-right"></i>
+                        CREA UNA CLASE
                     </a>
                 </div>
             </div>
             <% } %>
-        </section>
-
-        <div class="content-section active" id="classes-section">
+            <% if (clases && clases.length > 0) { %>
             <div class="row" id="classContainer">
-                <% if (clases && clases.length > 0) { %>
-                    <% clases.forEach(clase => { %>
-                        <div class="col-md-4 col-lg-3 mb-4">
-                            <div class="card h-100 shadow-sm border-0 class-card">
-                                <div class="card-header text-white p-3 position-relative" 
-                                     style="background-image: url('<%= clase.portada_url || '' %>'); 
-                                             background-color: #1a73e8; 
-                                             background-size: cover; 
-                                             background-position: center;
-                                             height: 100px;
-                                             overflow: hidden;">
-                                    <% if (clase.portada_url) { %>
-                                        <div style="background: rgba(0,0,0,0.5); position: absolute; top: 0; left: 0; right: 0; bottom: 0;"></div>
-                                    <% } %>
-                                    <div class="position-relative" style="z-index: 1;">
-                                        <h5 class="card-title mb-0"><%= clase.nombre_clase %></h5>
-                                        <p class="small opacity-75"><%= clase.seccion %></p>
-                                    </div>
-                                    <% if (clase.isProfesor) { %>
-                                        <label for="bannerInput<%= clase.id %>" 
-                                               class="btn btn-sm btn-light rounded-circle position-absolute top-0 end-0 m-2"
-                                               style="z-index: 2; cursor: pointer;">
-                                            <i class="fa-solid fa-image"></i>
-                                            <input type="file" 
-                                                   id="bannerInput<%= clase.id %>" 
-                                                   hidden 
-                                                   accept="image/*"
-                                                   onchange="uploadBanner('<%= clase.id %>', event)">
-                                        </label>
-                                    <% } %>
+                <% clases.forEach(clase => { %>
+                    <div class="col-md-4 col-lg-3 mb-4">
+                        <div class="card h-100 shadow-sm border-0 class-card">
+                            <div class="card-header text-white p-3 position-relative class-banner" data-bg="<%= clase.portada_url || '' %>">
+                                <% if (clase.portada_url) { %>
+                                    <div style="background: rgba(0,0,0,0.5); position: absolute; top: 0; left: 0; right: 0; bottom: 0;"></div>
+                                <% } %>
+                                <div class="position-relative" style="z-index: 1;">
+                                    <h5 class="card-title mb-0"><%= clase.nombre_clase %></h5>
+                                    <p class="small opacity-75"><%= clase.seccion %></p>
                                 </div>
-                                <div class="card-body d-flex flex-column justify-content-between">
-                                    <p class="card-text small text-muted">Profesor: <%= clase.profesor ? (clase.profesor.nombre + ' ' + (clase.profesor.apellido || '')) : 'No asignado' %></p>
-                                    <div class="text-end">
-                                        <a href="/clase/<%= clase.id %>" class="btn btn-outline-primary btn-sm rounded-pill">Entrar</a>
-                                    </div>
+                                <% if (clase.isProfesor) { %>
+                                    <label for="bannerInput<%= clase.id %>" 
+                                           class="btn btn-sm btn-light rounded-circle position-absolute top-0 end-0 m-2"
+                                           style="z-index: 2; cursor: pointer;">
+                                        <i class="fa-solid fa-image"></i>
+                                        <input type="file" 
+                                               id="bannerInput<%= clase.id %>" 
+                                               hidden 
+                                               accept="image/*"
+                                               onchange="uploadBanner('<%= clase.id %>', event)">
+                                    </label>
+                                <% } %>
+                            </div>
+                            <div class="card-body d-flex flex-column justify-content-between">
+                                <p class="card-text small text-muted">Profesor: <%= clase.profesor ? (clase.profesor.nombre + ' ' + (clase.profesor.apellido || '')) : 'No asignado' %></p>
+                                <div class="text-end">
+                                    <a href="/clase/<%= clase.id %>" class="btn btn-outline-primary btn-sm rounded-pill">Entrar</a>
                                 </div>
                             </div>
                         </div>
-                    <% }) %>
-                <% } else { %>
-                    <div class="text-center mt-5">
-                        <img src="public/img/no-clases.svg" alt="Aún no tienes clases" class="mb-4 img-fluid" style="max-height: 200px; opacity: 0.6;">                    <p class="text-muted mt-3">Aún no tienes clases. ¡Crea una o únete a una!</p>
                     </div>
-                <% } %>
+                <% }) %>
             </div>
+            <% } %>
         </div>
 
         <div class="content-section" id="calendar-section">

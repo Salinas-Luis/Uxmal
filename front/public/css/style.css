@@ -196,3 +196,25 @@ textarea:focus {
   color: var(--primary) !important;
 }
 
+#sectionTasks,
+#sectionPersonas,
+#sectionRendimiento {
+  display: block !important;
+  position: relative !important;
+  width: 100% !important;
+  min-height: 1px !important;
+}
+
+#sectionTasks *,
+#sectionPersonas *,
+#sectionRendimiento * {
+  position: static !important;
+  min-height: 0 !important;
+}
+
+#sectionTasks.d-none,
+#sectionPersonas.d-none,
+#sectionRendimiento.d-none {
+  display: none !important;
+}
+
