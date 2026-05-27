@@ -205,6 +205,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const claseId = button?.getAttribute('data-clase-id');
             if (claseId) {
                 loadUnitsForClass(claseId);
+                loadRubricsForAssignment(claseId);
                 const dueDateInput = document.getElementById('taskDueDate');
                 if (dueDateInput) {
                     const minDate = getMexicoCityMinDateTime();

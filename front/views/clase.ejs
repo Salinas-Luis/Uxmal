@@ -651,7 +651,7 @@
                             <h2 class="h5 fw-bold mb-1">Rúbricas estándar</h2>
                             <p class="mb-0 text-muted">Gestiona los criterios de calificación reusables.</p>
                         </div>
-                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#rubricModal" onclick="setTimeout(loadAllRubrics, 300)">
+                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#rubricModal" onclick="openRubricModal('management', null, '<%= clase.id %>')">
                             <i class="fa-solid fa-plus me-2"></i> Nueva rúbrica
                         </button>
                     </div>
@@ -687,12 +687,18 @@
     <script src="/public/js/tareas.js"></script>
     <script src="/public/js/rubrics.js"></script>
     <script>
+        const claseId = '<%= clase.id %>';
+        
         document.addEventListener('DOMContentLoaded', function() {
             const modal = document.getElementById('createAssignmentModal');
             if (modal) {
                 modal.addEventListener('shown.bs.modal', function() {
-                    loadRubricsForAssignment();
+                    loadRubricsForAssignment(claseId);
                 });
+            }
+            
+            if (window.rubricModalContext === 'management') {
+                loadRubricsByClass(claseId);
             }
         });
     </script>

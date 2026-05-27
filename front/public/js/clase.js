@@ -56,7 +56,11 @@ function switchSection(section) {
     }
 
     if (section === 'rubrics') {
-        loadAllRubrics();
+        if (typeof claseId !== 'undefined' && claseId) {
+            loadRubricsByClass(claseId);
+        } else {
+            loadAllRubrics();
+        }
     }
 
     const buttons = {

@@ -1,6 +1,31 @@
 const RubricModel = require('../model/rubricModel');
 const supabase = require('../config/db');
 
+async function verifyTeacherForRubric(user, rubricaId) {
+    const { data: tareaLink, error: tareaLinkError } = await RubricModel.getTaskByRubricId(rubricaId);
+    if (tareaLinkError) throw tareaLinkError;
+
+    if (!tareaLink || !tareaLink.tarea_id) {
+        return true;
+    }
+
+    const { data: tarea, error: tareaError } = await supabase
+        .from('tareas')
+        .select('clase_id')
+        .eq('id', tareaLink.tarea_id)
+        .single();
+    if (tareaError) throw tareaError;
+
+    const { data: clase, error: claseError } = await supabase
+        .from('clases')
+        .select('profesor_id')
+        .eq('id', tarea.clase_id)
+        .single();
+    if (claseError) throw claseError;
+
+    return clase && clase.profesor_id === user.id;
+}
+
 exports.getAllRubrics = async (req, res) => {
     try {
         const { data, error } = await RubricModel.getAll();
@@ -14,25 +39,98 @@ exports.getAllRubrics = async (req, res) => {
     }
 };
 
-exports.createGlobalRubric = async (req, res) => {
+exports.getRubricsByClass = async (req, res) => {
     try {
-        const { criterio, descripcion, puntos_maximos } = req.body;
+        const { claseId } = req.params;
         const user = req.user || req.session?.user;
 
         if (!user) {
             return res.status(401).json({ error: "Sesión expirada o no iniciada" });
         }
 
+        const { data: clase, error: claseError } = await supabase
+            .from('clases')
+            .select('profesor_id')
+            .eq('id', claseId)
+            .single();
+
+        if (claseError) throw claseError;
+        if (!clase) {
+            return res.status(404).json({ error: "Clase no encontrada" });
+        }
+
+        const { data, error } = await RubricModel.getByClass(claseId);
+
+        if (error) throw error;
+
+        res.json(data || []);
+    } catch (err) {
+        console.error("Error al obtener rúbricas de clase:", err);
+        res.status(500).json({ error: "No se pudieron obtener las rúbricas" });
+    }
+};
+
+exports.createGlobalRubric = async (req, res) => {
+    try {
+        const { criterio, descripcion, puntos_maximos, tarea_id, clase_id } = req.body;
+        const user = req.user || req.session?.user;
+
+        if (!user) {
+            return res.status(401).json({ error: "Sesión expirada o no iniciada" });
+        }
+
+        let claseIdToUse = clase_id;
+
+        if (tarea_id && !clase_id) {
+            const { data: tarea } = await supabase
+                .from('tareas')
+                .select('clase_id')
+                .eq('id', tarea_id)
+                .single();
+
+            if (tarea) {
+                claseIdToUse = tarea.clase_id;
+            }
+        }
+
         const { data, error } = await RubricModel.create({
             criterio,
             descripcion,
             puntos_maximos,
-            orden: 0
+            orden: 0,
+            clase_id: claseIdToUse || null
         });
 
         if (error) throw error;
 
-        res.status(201).json(data[0]);
+        const createdRubric = data?.[0];
+
+        if (tarea_id && createdRubric?.id) {
+            const { data: tarea } = await supabase
+                .from('tareas')
+                .select('clase_id')
+                .eq('id', tarea_id)
+                .single();
+
+            if (!tarea) {
+                return res.status(404).json({ error: "Tarea no encontrada" });
+            }
+
+            const { data: clase } = await supabase
+                .from('clases')
+                .select('profesor_id')
+                .eq('id', tarea.clase_id)
+                .single();
+
+            if (!clase || clase.profesor_id !== user.id) {
+                return res.status(403).json({ error: "No tienes permiso para asociar esta rúbrica a la tarea" });
+            }
+
+            const { error: assignmentError } = await RubricModel.assignRubricToTask(tarea_id, createdRubric.id);
+            if (assignmentError) throw assignmentError;
+        }
+
+        res.status(201).json(createdRubric);
     } catch (err) {
         console.error("Error al crear rúbrica:", err);
         res.status(500).json({ error: "No se pudo crear la rúbrica" });
@@ -50,7 +148,7 @@ exports.createRubric = async (req, res) => {
 
         const { data: tarea } = await supabase
             .from('tareas')
-            .select('clase_id, creador_id')
+            .select('clase_id')
             .eq('id', tarea_id)
             .single();
 
@@ -65,11 +163,10 @@ exports.createRubric = async (req, res) => {
             .single();
 
         if (!clase || clase.profesor_id !== user.id) {
-            return res.status(403).json({ error: "No tienes permiso para agregar rubricas" });
+            return res.status(403).json({ error: "No tienes permiso para agregar rúbricas" });
         }
 
         const { data, error } = await RubricModel.create({
-            tarea_id,
             criterio,
             descripcion,
             puntos_maximos,
@@ -80,8 +177,8 @@ exports.createRubric = async (req, res) => {
 
         res.status(201).json(data[0]);
     } catch (err) {
-        console.error("Error al crear rubrica:", err);
-        res.status(500).json({ error: "No se pudo crear la rubrica" });
+        console.error("Error al crear rúbrica:", err);
+        res.status(500).json({ error: "No se pudo crear la rúbrica" });
     }
 };
 
@@ -95,8 +192,114 @@ exports.getRubricsByTask = async (req, res) => {
 
         res.json(data || []);
     } catch (err) {
-        console.error("Error al obtener rubricas:", err);
-        res.status(500).json({ error: "No se pudieron obtener las rubricas" });
+        console.error("Error al obtener rúbricas:", err);
+        res.status(500).json({ error: "No se pudieron obtener las rúbricas" });
+    }
+};
+
+exports.getRubricLevels = async (req, res) => {
+    try {
+        const { rubricaId } = req.params;
+        const { data, error } = await RubricModel.getLevelsByRubric(rubricaId);
+
+        if (error) throw error;
+        res.json(data || []);
+    } catch (err) {
+        console.error("Error al obtener niveles de rúbrica:", err);
+        res.status(500).json({ error: "No se pudieron obtener los niveles" });
+    }
+};
+
+exports.createRubricLevel = async (req, res) => {
+    try {
+        const { rubricaId } = req.params;
+        const { puntos, titulo, descripcion, orden } = req.body;
+        const user = req.user || req.session?.user;
+
+        if (!user) {
+            return res.status(401).json({ error: "Sesión expirada o no iniciada" });
+        }
+
+        const canEdit = await verifyTeacherForRubric(user, rubricaId);
+        if (!canEdit) {
+            return res.status(403).json({ error: "No tienes permiso para agregar niveles a esta rúbrica" });
+        }
+
+        const { data, error } = await RubricModel.createLevel({
+            rubrica_id: rubricaId,
+            puntos,
+            titulo,
+            descripcion,
+            orden
+        });
+
+        if (error) throw error;
+        res.status(201).json(data[0]);
+    } catch (err) {
+        console.error("Error al crear nivel de rúbrica:", err);
+        res.status(500).json({ error: "No se pudo crear el nivel de rúbrica" });
+    }
+};
+
+exports.updateRubricLevel = async (req, res) => {
+    try {
+        const { levelId } = req.params;
+        const { puntos, titulo, descripcion, orden } = req.body;
+        const user = req.user || req.session?.user;
+
+        if (!user) {
+            return res.status(401).json({ error: "Sesión expirada o no iniciada" });
+        }
+
+        const { data: level, error: levelError } = await RubricModel.getLevelById(levelId);
+        if (levelError) throw levelError;
+        if (!level) return res.status(404).json({ error: "Nivel de rúbrica no encontrado" });
+
+        const canEdit = await verifyTeacherForRubric(user, level.rubrica_id);
+        if (!canEdit) {
+            return res.status(403).json({ error: "No tienes permiso para editar este nivel" });
+        }
+
+        const { data, error } = await RubricModel.updateLevel(levelId, {
+            puntos,
+            titulo,
+            descripcion,
+            orden
+        });
+
+        if (error) throw error;
+        res.json(data[0]);
+    } catch (err) {
+        console.error("Error al actualizar nivel de rúbrica:", err);
+        res.status(500).json({ error: "No se pudo actualizar el nivel" });
+    }
+};
+
+exports.deleteRubricLevel = async (req, res) => {
+    try {
+        const { levelId } = req.params;
+        const user = req.user || req.session?.user;
+
+        if (!user) {
+            return res.status(401).json({ error: "Sesión expirada o no iniciada" });
+        }
+
+        const { data: level, error: levelError } = await RubricModel.getLevelById(levelId);
+        if (levelError) throw levelError;
+        if (!level) return res.status(404).json({ error: "Nivel de rúbrica no encontrado" });
+
+        const canEdit = await verifyTeacherForRubric(user, level.rubrica_id);
+        if (!canEdit) {
+            return res.status(403).json({ error: "No tienes permiso para eliminar este nivel" });
+        }
+
+        const { error } = await RubricModel.deleteLevel(levelId);
+        if (error) throw error;
+
+        res.json({ message: "Nivel de rúbrica eliminado correctamente" });
+    } catch (err) {
+        console.error("Error al eliminar nivel de rúbrica:", err);
+        res.status(500).json({ error: "No se pudo eliminar el nivel" });
     }
 };
 
@@ -115,20 +318,9 @@ exports.updateRubric = async (req, res) => {
             return res.status(404).json({ error: "Rubrica no encontrada" });
         }
 
-        const { data: tarea } = await supabase
-            .from('tareas')
-            .select('clase_id')
-            .eq('id', rubrica.tarea_id)
-            .single();
-
-        const { data: clase } = await supabase
-            .from('clases')
-            .select('profesor_id')
-            .eq('id', tarea.clase_id)
-            .single();
-
-        if (!clase || clase.profesor_id !== user.id) {
-            return res.status(403).json({ error: "No tienes permiso para editar esta rubrica" });
+        const canEdit = await verifyTeacherForRubric(user, id);
+        if (!canEdit) {
+            return res.status(403).json({ error: "No tienes permiso para editar esta rúbrica" });
         }
 
         const { data, error } = await RubricModel.update(id, {
@@ -139,11 +331,10 @@ exports.updateRubric = async (req, res) => {
         });
 
         if (error) throw error;
-
         res.json(data[0]);
     } catch (err) {
-        console.error("Error al actualizar rubrica:", err);
-        res.status(500).json({ error: "No se pudo actualizar la rubrica" });
+        console.error("Error al actualizar rúbrica:", err);
+        res.status(500).json({ error: "No se pudo actualizar la rúbrica" });
     }
 };
 
@@ -161,30 +352,18 @@ exports.deleteRubric = async (req, res) => {
             return res.status(404).json({ error: "Rubrica no encontrada" });
         }
 
-        const { data: tarea } = await supabase
-            .from('tareas')
-            .select('clase_id')
-            .eq('id', rubrica.tarea_id)
-            .single();
-
-        const { data: clase } = await supabase
-            .from('clases')
-            .select('profesor_id')
-            .eq('id', tarea.clase_id)
-            .single();
-
-        if (!clase || clase.profesor_id !== user.id) {
-            return res.status(403).json({ error: "No tienes permiso para eliminar esta rubrica" });
+        const canDelete = await verifyTeacherForRubric(user, id);
+        if (!canDelete) {
+            return res.status(403).json({ error: "No tienes permiso para eliminar esta rúbrica" });
         }
 
         const { error } = await RubricModel.delete(id);
-
         if (error) throw error;
 
         res.json({ message: "Rubrica eliminada correctamente" });
     } catch (err) {
-        console.error("Error al eliminar rubrica:", err);
-        res.status(500).json({ error: "No se pudo eliminar la rubrica" });
+        console.error("Error al eliminar rúbrica:", err);
+        res.status(500).json({ error: "No se pudo eliminar la rúbrica" });
     }
 };
 
@@ -206,11 +385,15 @@ exports.getSubmissionGrades = async (req, res) => {
 exports.gradeSubmissionRubrics = async (req, res) => {
     try {
         const { entregaId } = req.params;
-        const { calificaciones } = req.body; 
+        let { calificaciones } = req.body;
         const user = req.user || req.session?.user;
 
         if (!user) {
             return res.status(401).json({ error: "Sesión expirada o no iniciada" });
+        }
+
+        if (!Array.isArray(calificaciones) && typeof calificaciones === 'object' && calificaciones !== null) {
+            calificaciones = Object.entries(calificaciones).map(([rubricaId, puntos_obtenidos]) => ({ rubrica_id: rubricaId, puntos_obtenidos }));
         }
 
         const { data: entrega } = await supabase
@@ -240,11 +423,22 @@ exports.gradeSubmissionRubrics = async (req, res) => {
         }
 
         for (const calificacion of calificaciones) {
-            await RubricModel.gradeRubric(
+            const gradeResult = await RubricModel.gradeRubric(
                 entregaId,
                 calificacion.rubrica_id,
-                calificacion.puntos_obtenidos
+                Number(calificacion.puntos_obtenidos)
             );
+
+            if (gradeResult.error) throw gradeResult.error;
+
+            if (gradeResult.data && calificacion.nivel_id) {
+                const detailResult = await RubricModel.setRubricDetail(
+                    gradeResult.data.id,
+                    calificacion.nivel_id,
+                    Number(calificacion.puntos_obtenidos)
+                );
+                if (detailResult.error) throw detailResult.error;
+            }
         }
 
         res.json({ message: "Calificaciones guardadas correctamente" });

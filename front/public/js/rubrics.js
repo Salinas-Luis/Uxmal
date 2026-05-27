@@ -1,4 +1,8 @@
 
+window.rubricModalContext = null;
+window.rubricModalTaskId = null;
+window.rubricModalClaseId = null;
+
 async function loadAllRubrics() {
     try {
         const response = await fetch('/api/rubrics', {
@@ -10,6 +14,39 @@ async function loadAllRubrics() {
     } catch (err) {
         console.error('Error al cargar rúbricas:', err);
         showError('Error', 'No se pudieron cargar las rúbricas');
+    }
+}
+
+function openRubricModal(context = null, taskId = null, claseId = null) {
+    window.rubricModalContext = context;
+    window.rubricModalTaskId = taskId;
+    window.rubricModalClaseId = claseId;
+    
+    if (context === 'assignment' && claseId) {
+        loadRubricsByClass(claseId);
+    } else {
+        loadAllRubrics();
+    }
+}
+
+async function loadRubricsByClass(claseId) {
+    try {
+        const response = await fetch(`/api/rubrics/class/${claseId}`, {
+            credentials: 'include'
+        });
+        if (!response.ok) throw new Error('Error al cargar rúbricas de clase');
+        const rubrics = await response.json();
+        displayRubrics(rubrics);
+    } catch (err) {
+        console.error('Error al cargar rúbricas de clase:', err);
+        showError('Error', 'No se pudieron cargar las rúbricas');
+    }
+}
+
+async function refreshRubricViews() {
+    await loadAllRubrics();
+    if (window.rubricModalContext === 'assignment') {
+        loadRubricsForAssignment();
     }
 }
 
@@ -51,11 +88,25 @@ async function createNewRubric() {
     if (!validateRange(puntos_maximos, 1, 1000, 'Los puntos máximos')) return;
 
     try {
+        const payload = {
+            criterio,
+            descripcion,
+            puntos_maximos: Number(puntos_maximos)
+        };
+
+        if (window.rubricModalTaskId) {
+            payload.tarea_id = window.rubricModalTaskId;
+        }
+
+        if (window.rubricModalClaseId) {
+            payload.clase_id = window.rubricModalClaseId;
+        }
+
         const response = await fetch('/api/rubrics', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            body: JSON.stringify({ criterio, descripcion, puntos_maximos: Number(puntos_maximos) })
+            body: JSON.stringify(payload)
         });
 
         if (!response.ok) {
@@ -73,7 +124,7 @@ async function createNewRubric() {
             if (modal) modal.hide();
         }
 
-        loadAllRubrics();
+        refreshRubricViews();
     } catch (err) {
         console.error('Error:', err);
         showError('Error', err.message);
@@ -122,7 +173,7 @@ async function saveRubricChanges() {
             if (modal) modal.hide();
         }
 
-        loadAllRubrics();
+        refreshRubricViews();
     } catch (err) {
         showError('Error', err.message);
     }
@@ -144,16 +195,21 @@ async function deleteRubric(id, criterio) {
         }
 
         await showSuccess('Rúbrica eliminada', 'Se eliminó correctamente');
-        loadAllRubrics();
+        refreshRubricViews();
     } catch (err) {
         showError('Error', err.message);
     }
 }
 
 
-async function loadRubricsForAssignment() {
+async function loadRubricsForAssignment(claseId = null) {
     try {
-        const response = await fetch('/api/rubrics', {
+        let endpoint = '/api/rubrics';
+        if (claseId) {
+            endpoint = `/api/rubrics/class/${claseId}`;
+        }
+
+        const response = await fetch(endpoint, {
             credentials: 'include'
         });
         if (!response.ok) throw new Error('Error al cargar rúbricas');
@@ -163,7 +219,7 @@ async function loadRubricsForAssignment() {
         if (!container) return;
 
         if (!rubrics || rubrics.length === 0) {
-            container.innerHTML = '<p class="small text-muted mb-0">No hay rúbricas disponibles. <a href="#rubricManagement" onclick="openRubricManagement()">Crear una</a></p>';
+            container.innerHTML = '<p class="small text-muted mb-0">No hay rúbricas disponibles. <a href="#" onclick="openRubricModal(\'assignment\', null, \'' + (claseId || '') + '\'); return false;">Crear una</a></p>';
             return;
         }
 
@@ -287,16 +343,17 @@ async function loadStudentRubricGrades(entregaId) {
         
         const gradesHtml = grades.map(g => {
             const rubric = g.rubricas || g;
-            totalScore += g.calificacion || 0;
+            const scored = g.puntos_obtenidos || 0;
+            totalScore += scored;
             maxScore += rubric.puntos_maximos;
-            const percent = ((g.calificacion || 0) / rubric.puntos_maximos * 100).toFixed(0);
+            const percent = ((scored) / rubric.puntos_maximos * 100).toFixed(0);
             
             return `
                 <div class="mb-2 p-2 border-start border-info ps-3">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
                             <strong>${rubric.criterio}</strong>
-                            <div class="small text-muted">${g.calificacion || 0}/${rubric.puntos_maximos}</div>
+                            <div class="small text-muted">${scored}/${rubric.puntos_maximos}</div>
                         </div>
                         <span class="badge ${percent >= 70 ? 'bg-success' : percent >= 50 ? 'bg-warning' : 'bg-danger'}">${percent}%</span>
                     </div>
