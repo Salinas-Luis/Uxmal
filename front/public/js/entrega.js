@@ -1,12 +1,23 @@
-document.getElementById('submissionFile')?.addEventListener('change', function(e) {
-    const fileName = e.target.files[0]?.name || "";
-    document.getElementById('fileNameDisplay').textContent = fileName;
+document.addEventListener('change', function(e) {
+    if (e.target && e.target.id === 'submissionFile') {
+        const fileName = e.target.files[0]?.name || "";
+        document.getElementById('fileNameDisplay').textContent = fileName;
+    }
+});
+
+document.addEventListener('submit', function(e) {
+    if (e.target && e.target.id === 'submissionForm') {
+        e.preventDefault();
+    }
 });
 
 async function submitTask(tareaId) {
     const fileInput = document.getElementById('submissionFile');
     const comentario = document.getElementById('comentarioAlumno')?.value.trim() || '';
-    const user = JSON.parse(localStorage.getItem('user'));
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const estudianteId = user.id;
+
+    console.log('submitTask invoked', { tareaId, fileName: fileInput?.files[0]?.name, comentario, estudianteId });
 
     if (!fileInput.files[0]) {
         showConfirm(
@@ -16,7 +27,7 @@ async function submitTask(tareaId) {
             'Cancelar'
         ).then(result => {
             if (!result.isConfirmed) return;
-            submitTaskWithoutFile(tareaId, comentario, user.id);
+            submitTaskWithoutFile(tareaId, comentario, estudianteId);
         });
         return;
     }
@@ -38,6 +49,7 @@ async function submitTaskWithoutFile(tareaId, comentario, estudianteId, archivo 
     }
 
     try {
+        console.log('sending POST to /api/assignments/submit', { tareaId, estudianteId, hasFile: !!archivo });
         const response = await fetch('/api/assignments/submit', {
             method: 'POST',
             body: formData,
@@ -46,12 +58,22 @@ async function submitTaskWithoutFile(tareaId, comentario, estudianteId, archivo 
 
         if (response.ok) {
             await showSuccess('¡Tarea entregada!', 'Tu tarea ha sido entregada correctamente');
-            location.reload();
+            refreshSubmissionView();
         } else {
-            showError('Error al entregar', 'No se pudo entregar la tarea');
+            const err = await response.json().catch(() => null);
+            const message = err?.error || `No se pudo entregar la tarea (status ${response.status})`;
+            showError('Error al entregar', message);
         }
     } catch (error) {
         showError('Error de conexión', 'No se pudo conectar con el servidor');
+    }
+}
+
+function refreshSubmissionView() {
+    if (typeof openTaskDetail === 'function' && window.currentTaskId) {
+        openTaskDetail(window.currentTaskId);
+    } else {
+        location.reload();
     }
 }
 
@@ -74,7 +96,7 @@ async function cancelSubmission(entregaId) {
 
             if (response.ok) {
                 await showSuccess('Entrega anulada', 'La entrega ha sido anulada correctamente');
-                history.back();
+                refreshSubmissionView();
             } else {
                 showError('Error al anular', 'No se pudo anular la entrega');
             }

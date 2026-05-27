@@ -2,14 +2,20 @@ const supabase = require('../config/db');
 
 class PostModel {
     static async create(postData) {
+        const insertData = {
+            clase_id: postData.clase_id,
+            autor_id: postData.autor_id,
+            contenido: postData.contenido,
+            fecha_publicacion: new Date()
+        };
+
+        if (postData.archivo_adjunto_url) {
+            insertData.archivo_adjunto_url = postData.archivo_adjunto_url;
+        }
+
         const { data, error } = await supabase
             .from('anuncios')
-            .insert([{
-                clase_id: postData.clase_id,
-                autor_id: postData.autor_id,
-                contenido: postData.contenido,
-                fecha_publicacion: new Date() 
-            }])
+            .insert([insertData])
             .select();
         return { data, error };
     }
@@ -38,6 +44,7 @@ static async getByClass(claseId) {
 
         const anuncios = (anunciosRes.data || []).map(a => ({
             ...a,
+            archivo_url: a.archivo_adjunto_url || a.archivo_url || null,
             tipo: 'anuncio',
             fecha_orden: a.fecha_publicacion || a.created_at 
         }));

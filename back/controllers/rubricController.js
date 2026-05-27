@@ -1,6 +1,44 @@
 const RubricModel = require('../model/rubricModel');
 const supabase = require('../config/db');
 
+exports.getAllRubrics = async (req, res) => {
+    try {
+        const { data, error } = await RubricModel.getAll();
+
+        if (error) throw error;
+
+        res.json(data || []);
+    } catch (err) {
+        console.error("Error al obtener rúbricas estándar:", err);
+        res.status(500).json({ error: "No se pudieron obtener las rúbricas" });
+    }
+};
+
+exports.createGlobalRubric = async (req, res) => {
+    try {
+        const { criterio, descripcion, puntos_maximos } = req.body;
+        const user = req.user || req.session?.user;
+
+        if (!user) {
+            return res.status(401).json({ error: "Sesión expirada o no iniciada" });
+        }
+
+        const { data, error } = await RubricModel.create({
+            criterio,
+            descripcion,
+            puntos_maximos,
+            orden: 0
+        });
+
+        if (error) throw error;
+
+        res.status(201).json(data[0]);
+    } catch (err) {
+        console.error("Error al crear rúbrica:", err);
+        res.status(500).json({ error: "No se pudo crear la rúbrica" });
+    }
+};
+
 exports.createRubric = async (req, res) => {
     try {
         const { tarea_id, criterio, descripcion, puntos_maximos, orden } = req.body;

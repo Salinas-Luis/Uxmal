@@ -1,6 +1,7 @@
 const UserModel = require('../model/userModel');
 const supabase = require('../config/db');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 
 const validateEmail = (email) => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -8,7 +9,7 @@ const validateEmail = (email) => {
 };
 
 const validatePassword = (password) => {
-    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+    const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d]{8,16}$/;
     return passwordRegex.test(password);
 };
 
@@ -32,7 +33,7 @@ exports.register = async (req, res) => {
             return res.status(400).json({ error: "La contraseña es obligatoria" });
         }
         if (!validatePassword(password)) {
-            return res.status(400).json({ error: "La contraseña debe tener al menos 8 caracteres, una mayúscula, una minúscula y un número" });
+            return res.status(400).json({ error: "La contraseña debe tener entre 8 y 16 caracteres, una mayúscula, una minúscula y un número" });
         }
 
         const { data: existingUser } = await supabase
@@ -45,7 +46,8 @@ exports.register = async (req, res) => {
             return res.status(400).json({ error: "El email ya está registrado" });
         }
         
-        const { data, error } = await UserModel.create({ nombre, apellido, email, password });
+        const hashedPassword = await bcrypt.hash(password, 12);
+        const { data, error } = await UserModel.create({ nombre, apellido, email, password: hashedPassword });
         
         if (error) return res.status(400).json({ error: error.message });
         
@@ -70,13 +72,10 @@ exports.login = async (req, res) => {
             return res.status(400).json({ error: "La contraseña es obligatoria" });
         }
 
-        const { data: usuario, error } = await supabase
-            .from('usuarios')
-            .select('*')
-            .eq('email', email)
-            .single();
+        const { data: usuario, error } = await UserModel.findByEmail(email);
 
-        if (error || !usuario || usuario.password !== password) { 
+        const passwordMatch = usuario && usuario.password ? await bcrypt.compare(password, usuario.password) : false;
+        if (error || !usuario || !passwordMatch) {
             return res.status(401).json({ error: "Credenciales incorrectas" });
         }
 

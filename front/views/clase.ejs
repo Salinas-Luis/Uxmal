@@ -24,6 +24,10 @@
                         <i class="fa-solid fa-plus"></i>
                         <span>Crea una clase</span>
                     </a>
+                    <a href="#" class="nav-action text-dark small d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#supportModal">
+                        <i class="fa-solid fa-headset"></i>
+                        <span>Soporte</span>
+                    </a>
                     <div class="dropdown">
                         <button class="btn avatar-circle" data-bs-toggle="dropdown" aria-expanded="false">
                             <% if (user && user.avatar_url) { %>
@@ -55,14 +59,16 @@
         <ul class="sidebar-menu">
             <li>Realiza click en el boton deseado para ir a donde desees:</li>
             <li><a href="/dashboard" class="sidebar-link active"><i class="fa-solid fa-graduation-cap me-3"></i>Mis clases</a></li>
-            <li><a href="/clase/<%= clase.id %>/tareas" class="sidebar-link"><i class="fa-solid fa-clipboard-list me-3"></i>Tareas</a></li>
-            <li><a href="/clase/<%= clase.id %>/entregadas" class="sidebar-link"><i class="fa-solid fa-clipboard-check me-3"></i>Entregadas</a></li>
+            <li><a href="/dashboard?section=calendar" class="sidebar-link"><i class="fa-solid fa-clipboard-list me-3"></i>Tareas</a></li>
+            <li><a href="/dashboard?section=submissions" class="sidebar-link"><i class="fa-solid fa-clipboard-check me-3"></i>Entregadas</a></li>
+            <li><a href="/mis-reportes" class="sidebar-link"><i class="fa-solid fa-headset me-3"></i>Mis reportes</a></li>
         </ul>
         <div class="sidebar-footer">
-            <button class="video-action" type="button" aria-label="Ver video">
-                <i class="fa-solid fa-play"></i>
-                <span>Click para ver el tutorial</span>
-            </button>
+            <div class="mt-3">
+                <a href="/logout" class="btn btn-outline-danger btn-sm w-100">
+                    <i class="fa-solid fa-right-from-bracket me-2"></i>Cerrar sesión
+                </a>
+            </div>
         </div>
     </aside>
 
@@ -101,34 +107,44 @@
             <div class="btn-group" role="group" aria-label="Secciones de clase">
                 <button id="tabTasksBtn" type="button" class="btn btn-outline-secondary active" onclick="switchSection('tasks')">Tareas</button>
                 <button id="tabPersonasBtn" type="button" class="btn btn-outline-secondary" onclick="switchSection('personas')">Personas</button>
+                <% if (isProfesor) { %>
+                    <button id="tabRubricsBtn" type="button" class="btn btn-outline-secondary" onclick="switchSection('rubrics')">Rúbricas</button>
+                <% } %>
             </div>
         </div>
 
-        <% if (isProfesor) { %>
-            <div class="d-flex flex-wrap gap-2 mb-4">
+        <div class="d-flex flex-wrap gap-2 mb-4">
+            <% if (isProfesor) { %>
                 <button class="btn btn-primary btn-sm rounded-pill px-4" data-bs-toggle="modal" data-bs-target="#createAssignmentModal">
                     <i class="fa-solid fa-plus me-2"></i> Crear tarea
-                </button>
-                <button class="btn btn-outline-primary btn-sm rounded-pill px-4" type="button" data-bs-toggle="collapse" data-bs-target="#announcementForm">
-                    <i class="fa-solid fa-bullhorn me-2"></i> Crear anuncio
                 </button>
                 <button id="tabRendimientoBtn" class="btn btn-outline-secondary btn-sm rounded-pill px-4" onclick="switchSection('rendimiento')">
                     <i class="fa-solid fa-chart-line me-2"></i> Rendimiento de Clase
                 </button>
-            </div>
-            <div class="collapse mb-4" id="announcementForm">
-                <div class="card card-body bg-white shadow-sm">
+            <% } %>
+            <button class="btn btn-outline-primary btn-sm rounded-pill px-4" type="button" data-bs-toggle="collapse" data-bs-target="#announcementForm">
+                <i class="fa-solid fa-bullhorn me-2"></i> Crear anuncio
+            </button>
+        </div>
+        <div class="collapse mb-4" id="announcementForm">
+            <div class="card card-body bg-white shadow-sm">
+                <div class="mb-3">
+                    <h6 class="fw-bold mb-2">Crear anuncio</h6>
+                    <textarea id="postContent" class="form-control mb-3" rows="3" maxlength="500" placeholder="Escribe tu anuncio aquí..."></textarea>
                     <div class="mb-3">
-                        <h6 class="fw-bold mb-2">Crear anuncio</h6>
-                        <textarea id="postContent" class="form-control mb-3" rows="3" placeholder="Escribe tu anuncio aquí..."></textarea>
-                    </div>
-                    <div class="d-flex justify-content-end gap-2">
-                        <button class="btn btn-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#announcementForm">Cancelar</button>
-                        <button class="btn btn-primary btn-sm" onclick="createPost('<%= clase.id %>')">Publicar anuncio</button>
+                        <label for="postFile" class="form-label">Adjuntar archivo (opcional)</label>
+                        <input type="file" id="postFile" class="form-control" accept="image/*,audio/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+                        <div class="mt-2 d-flex gap-2">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="startVoiceDictation('postContent', this)">Dictar comentario</button>
+                        </div>
                     </div>
                 </div>
+                <div class="d-flex justify-content-end gap-2">
+                    <button class="btn btn-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#announcementForm">Cancelar</button>
+                    <button class="btn btn-primary btn-sm" onclick="createPost('<%= clase.id %>')">Publicar anuncio</button>
+                </div>
             </div>
-        <% } %>
+        </div>
 
         <div id="sectionTasks">
             <div id="tasksOverview">
@@ -141,13 +157,20 @@
                                         <h2 class="h5 fw-bold mb-1">Tareas</h2>
                                         <p class="mb-0 text-muted">Haz clic sobre cualquier tarea para abrirla.</p>
                                     </div>
-                                    <% const tareaPosts = posts.filter(post => post.tipo === 'tarea'); %>
-                                    <% const unidadesMap = {}; (unidades || []).forEach(unit => { unidadesMap[unit.id] = unit; }); %>
-                                    <% const tareasPorUnidad = {}; const unidadOrder = []; (unidades || []).forEach(unit => { tareasPorUnidad[unit.id] = { unidad: unit, tareas: [] }; unidadOrder.push(unit.id); }); %>
-                                    <% const tareassSinUnidad = []; tareaPosts.forEach(post => { if (post.unidad_id && tareasPorUnidad[post.unidad_id]) { tareasPorUnidad[post.unidad_id].tareas.push(post); } else { tareassSinUnidad.push(post); } }); %>
-                                    <% if (!isProfesor) { %>
-                                        <span class="badge bg-primary bg-opacity-10 text-primary py-2 px-3"><%= tareaPosts.length %> pendientes</span>
-                                    <% } %>
+                                    <div class="d-flex gap-2 align-items-center">
+                                        <% const tareaPosts = posts.filter(post => post.tipo === 'tarea'); %>
+                                        <% const unidadesMap = {}; (unidades || []).forEach(unit => { unidadesMap[unit.id] = unit; }); %>
+                                        <% const tareasPorUnidad = {}; const unidadOrder = []; (unidades || []).forEach(unit => { tareasPorUnidad[unit.id] = { unidad: unit, tareas: [] }; unidadOrder.push(unit.id); }); %>
+                                        <% const tareassSinUnidad = []; tareaPosts.forEach(post => { if (post.unidad_id && tareasPorUnidad[post.unidad_id]) { tareasPorUnidad[post.unidad_id].tareas.push(post); } else { tareassSinUnidad.push(post); } }); %>
+                                        <% if (!isProfesor) { %>
+                                            <span class="badge bg-primary bg-opacity-10 text-primary py-2 px-3"><%= tareaPosts.length %> pendientes</span>
+                                        <% } %>
+                                        <% if (isProfesor) { %>
+                                            <button class="btn btn-sm btn-outline-primary rounded-pill" data-bs-toggle="modal" data-bs-target="#createUnitModal">
+                                                <i class="fa-solid fa-folder-plus me-1"></i> Crear unidad
+                                            </button>
+                                        <% } %>
+                                    </div>
                                 </div>
                                 <% if (tareaPosts.length === 0) { %>
                                     <div class="text-center py-5">
@@ -168,13 +191,21 @@
                                             </div>
                                             <div class="ps-4">
                                                 <% grupo.tareas.forEach(post => { %>
-                                                    <a href="#" onclick="openTaskDetail('<%= post.id %>', event)" class="task-button d-flex align-items-center justify-content-between text-decoration-none">
+                                                    <div class="task-button d-flex align-items-center justify-content-between text-decoration-none" onclick="openTaskDetail('<%= post.id %>', event)">
                                                         <div>
                                                             <div class="fw-bold text-dark mb-1"><%= post.titulo || 'Tarea sin título' %></div>
                                                             <p class="mb-0 text-muted"><%= post.descripcion || 'Revisa los detalles de la tarea aquí.' %></p>
                                                         </div>
-                                                        <span class="btn btn-sm btn-primary rounded-pill">Ir</span>
-                                                    </a>
+                                                        <div class="d-flex align-items-center gap-2">
+                                                            <% if (isProfesor || (user && post.creador_id === user.id)) { %>
+                                                                <button type="button" class="btn btn-sm btn-outline-warning rounded-pill" data-unit-id="<%= post.unidad_id || '' %>" onclick="event.stopPropagation(); editAssignment('<%= post.id %>', '<%= clase.id %>', this.dataset.unitId)">Asignar a unidad</button>
+                                                            <% } %>
+                                                            <% if (isProfesor || (user && post.creador_id === user.id)) { %>
+                                                                <button type="button" class="btn btn-sm btn-outline-danger rounded-pill" onclick="event.stopPropagation(); deleteAssignment('<%= post.id %>')">Eliminar</button>
+                                                            <% } %>
+                                                            <span class="btn btn-sm btn-primary rounded-pill">Ir</span>
+                                                        </div>
+                                                    </div>
                                                 <% }) %>
                                             </div>
                                         </div>
@@ -188,13 +219,21 @@
                                             </div>
                                             <div class="ps-4">
                                                 <% tareassSinUnidad.forEach(post => { %>
-                                                    <a href="#" onclick="openTaskDetail('<%= post.id %>', event)" class="task-button d-flex align-items-center justify-content-between text-decoration-none">
+                                                    <div class="task-button d-flex align-items-center justify-content-between text-decoration-none" onclick="openTaskDetail('<%= post.id %>', event)">
                                                         <div>
                                                             <div class="fw-bold text-dark mb-1"><%= post.titulo || 'Tarea sin título' %></div>
                                                             <p class="mb-0 text-muted"><%= post.descripcion || 'Revisa los detalles de la tarea aquí.' %></p>
                                                         </div>
-                                                        <span class="btn btn-sm btn-primary rounded-pill">Ir</span>
-                                                    </a>
+                                                        <div class="d-flex align-items-center gap-2">
+                                                            <% if (isProfesor || (user && post.creador_id === user.id)) { %>
+                                                                <button type="button" class="btn btn-sm btn-outline-warning rounded-pill" data-unit-id="<%= post.unidad_id || '' %>" onclick="event.stopPropagation(); editAssignment('<%= post.id %>', '<%= clase.id %>', this.dataset.unitId)">Asignar a unidad</button>
+                                                            <% } %>
+                                                            <% if (isProfesor || (user && post.creador_id === user.id)) { %>
+                                                                <button type="button" class="btn btn-sm btn-outline-danger rounded-pill" onclick="event.stopPropagation(); deleteAssignment('<%= post.id %>')">Eliminar</button>
+                                                            <% } %>
+                                                            <span class="btn btn-sm btn-primary rounded-pill">Ir</span>
+                                                        </div>
+                                                    </div>
                                                 <% }) %>
                                             </div>
                                         </div>
@@ -223,8 +262,16 @@
                                                         <small class="text-muted"><%= post.fecha_orden ? new Date(post.fecha_orden).toLocaleDateString() : '' %></small>
                                                     </div>
                                                 </div>
-                                                <div class="mb-1 fw-semibold"><%= post.titulo || 'Anuncio' %></div>
+                                                <div class="d-flex justify-content-between align-items-start mb-1">
+                                                    <div class="mb-1 fw-semibold"><%= post.titulo || 'Anuncio' %></div>
+                                                    <% if (isProfesor || (user && post.autor_id === user.id)) { %>
+                                                        <button type="button" class="btn btn-sm btn-outline-danger" onclick="deletePost('<%= post.id %>')">Eliminar</button>
+                                                    <% } %>
+                                                </div>
                                                 <p class="small text-muted mb-0"><%= post.descripcion || post.contenido || '' %></p>
+                                                <% if (post.archivo_url) { %>
+                                                    <p class="small mb-0 mt-2"><a href="<%= post.archivo_url %>" target="_blank" class="link-primary">Ver archivo adjunto</a></p>
+                                                <% } %>
                                             </div>
                                         </div>
                                     <% }) %>
@@ -329,8 +376,16 @@
                                                     <small class="text-muted"><%= post.fecha_orden ? new Date(post.fecha_orden).toLocaleDateString() : '' %></small>
                                                 </div>
                                             </div>
-                                            <div class="mb-1 fw-semibold"><%= post.titulo || 'Anuncio' %></div>
+                                            <div class="d-flex justify-content-between align-items-start mb-1">
+                                                <div class="mb-1 fw-semibold"><%= post.titulo || 'Anuncio' %></div>
+                                                <% if (isProfesor || (user && post.autor_id === user.id)) { %>
+                                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="deletePost('<%= post.id %>')">Eliminar</button>
+                                                <% } %>
+                                            </div>
                                             <p class="small text-muted mb-0"><%= post.descripcion || post.contenido || '' %></p>
+                                            <% if (post.archivo_url) { %>
+                                                <p class="small mb-0 mt-2"><a href="<%= post.archivo_url %>" target="_blank" class="link-primary">Ver archivo adjunto</a></p>
+                                            <% } %>
                                         </div>
                                     </div>
                                 <% }) %>
@@ -356,81 +411,8 @@
                                 <% } %>
                             </div>
 
-                            <% if (isProfesor && classPerformance) { %>
-                                <div class="row g-3 mb-4">
-                                    <div class="col-md-3">
-                                        <div class="card border-0 shadow-sm h-100">
-                                            <div class="card-body">
-                                                <div class="d-flex align-items-center justify-content-between">
-                                                    <div>
-                                                        <p class="text-muted small mb-1">Promedio</p>
-                                                        <h3 class="mb-0 fw-bold"><%= classPerformance.promedioCalificacion %></h3>
-                                                    </div>
-                                                    <div class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                                        <i class="fa-solid fa-star fa-lg"></i>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="card border-0 shadow-sm h-100">
-                                            <div class="card-body">
-                                                <div class="d-flex align-items-center justify-content-between">
-                                                    <div>
-                                                        <p class="text-muted small mb-1">Entregas</p>
-                                                        <h3 class="mb-0 fw-bold"><%= classPerformance.totalEntregas %></h3>
-                                                    </div>
-                                                    <div class="bg-info text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                                        <i class="fa-solid fa-check fa-lg"></i>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="card border-0 shadow-sm h-100">
-                                            <div class="card-body">
-                                                <div class="d-flex align-items-center justify-content-between">
-                                                    <div>
-                                                        <p class="text-muted small mb-1">No entregadas</p>
-                                                        <h3 class="mb-0 fw-bold"><%= classPerformance.noEntregadas %></h3>
-                                                    </div>
-                                                    <div class="bg-danger text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                                        <i class="fa-solid fa-ban fa-lg"></i>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="col-md-3">
-                                        <div class="card border-0 shadow-sm h-100">
-                                            <div class="card-body">
-                                                <div class="d-flex align-items-center justify-content-between">
-                                                    <div>
-                                                        <p class="text-muted small mb-1">% Entrega</p>
-                                                        <h3 class="mb-0 fw-bold"><%= classPerformance.porcentajeEntrega %>%</h3>
-                                                    </div>
-                                                    <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                                        <i class="fa-solid fa-percent fa-lg"></i>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="mb-4">
-                                    <label for="studentSelector" class="form-label fw-bold">Seleccionar alumno</label>
-                                    <select id="studentSelector" class="form-select" onchange="actualizarRendimientoIndividual()">
-                                        <option value="">-- Selecciona un alumno --</option>
-                                        <% (studentsList || []).forEach(student => { %>
-                                            <option value="<%= student.id %>"><%= student.nombre %> <%= student.apellido %></option>
-                                        <% }) %>
-                                    </select>
-                                </div>
-
-                                <div id="studentPerformanceSection" class="d-none">
+                            <% if (isProfesor) { %>
+                                <% if (classPerformance) { %>
                                     <div class="row g-3 mb-4">
                                         <div class="col-md-3">
                                             <div class="card border-0 shadow-sm h-100">
@@ -438,7 +420,7 @@
                                                     <div class="d-flex align-items-center justify-content-between">
                                                         <div>
                                                             <p class="text-muted small mb-1">Promedio</p>
-                                                            <h3 class="mb-0 fw-bold" id="studentAverage">0.00</h3>
+                                                            <h3 class="mb-0 fw-bold"><%= classPerformance.promedioCalificacion %></h3>
                                                         </div>
                                                         <div class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
                                                             <i class="fa-solid fa-star fa-lg"></i>
@@ -452,8 +434,8 @@
                                                 <div class="card-body">
                                                     <div class="d-flex align-items-center justify-content-between">
                                                         <div>
-                                                            <p class="text-muted small mb-1">Entregadas</p>
-                                                            <h3 class="mb-0 fw-bold" id="studentDelivered">0</h3>
+                                                            <p class="text-muted small mb-1">Entregas</p>
+                                                            <h3 class="mb-0 fw-bold"><%= classPerformance.totalEntregas %></h3>
                                                         </div>
                                                         <div class="bg-info text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
                                                             <i class="fa-solid fa-check fa-lg"></i>
@@ -467,11 +449,11 @@
                                                 <div class="card-body">
                                                     <div class="d-flex align-items-center justify-content-between">
                                                         <div>
-                                                            <p class="text-muted small mb-1">% Entrega</p>
-                                                            <h3 class="mb-0 fw-bold" id="studentDeliveryPercent">0%</h3>
+                                                            <p class="text-muted small mb-1">No entregadas</p>
+                                                            <h3 class="mb-0 fw-bold"><%= classPerformance.noEntregadas %></h3>
                                                         </div>
-                                                        <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                                            <i class="fa-solid fa-percent fa-lg"></i>
+                                                        <div class="bg-danger text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                                            <i class="fa-solid fa-ban fa-lg"></i>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -482,61 +464,141 @@
                                                 <div class="card-body">
                                                     <div class="d-flex align-items-center justify-content-between">
                                                         <div>
-                                                            <p class="text-muted small mb-1">Calificadas</p>
-                                                            <h3 class="mb-0 fw-bold" id="studentGraded">0</h3>
+                                                            <p class="text-muted small mb-1">% Entrega</p>
+                                                            <h3 class="mb-0 fw-bold"><%= classPerformance.porcentajeEntrega %>%</h3>
                                                         </div>
-                                                        <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
-                                                            <i class="fa-solid fa-clipboard-check fa-lg"></i>
+                                                        <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                                            <i class="fa-solid fa-percent fa-lg"></i>
                                                         </div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="row g-3">
-                                        <div class="col-md-6">
-                                            <div class="card border-0 shadow-sm">
-                                                <div class="card-body">
-                                                    <p class="small text-muted mb-2">A tiempo</p>
-                                                    <h4 class="fw-bold" id="studentOnTime">0</h4>
-                                                    <div class="progress" style="height: 8px;">
-                                                        <div class="progress-bar bg-success" id="studentOnTimeBar" style="width: 0%"></div>
+
+                                    <div class="mb-4">
+                                        <label for="studentSelector" class="form-label fw-bold">Seleccionar alumno</label>
+                                        <select id="studentSelector" class="form-select" onchange="actualizarRendimientoIndividual()">
+                                            <option value="">-- Selecciona un alumno --</option>
+                                            <% (studentsList || []).forEach(student => { %>
+                                                <option value="<%= student.id %>"><%= student.nombre %> <%= student.apellido %></option>
+                                            <% }) %>
+                                        </select>
+                                    </div>
+
+                                    <div id="studentPerformanceSection" class="d-none">
+                                        <div class="row g-3 mb-4">
+                                            <div class="col-md-3">
+                                                <div class="card border-0 shadow-sm h-100">
+                                                    <div class="card-body">
+                                                        <div class="d-flex align-items-center justify-content-between">
+                                                            <div>
+                                                                <p class="text-muted small mb-1">Promedio</p>
+                                                                <h3 class="mb-0 fw-bold" id="studentAverage">0.00</h3>
+                                                            </div>
+                                                            <div class="bg-warning text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                                                <i class="fa-solid fa-star fa-lg"></i>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="card border-0 shadow-sm h-100">
+                                                    <div class="card-body">
+                                                        <div class="d-flex align-items-center justify-content-between">
+                                                            <div>
+                                                                <p class="text-muted small mb-1">Entregadas</p>
+                                                                <h3 class="mb-0 fw-bold" id="studentDelivered">0</h3>
+                                                            </div>
+                                                            <div class="bg-info text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                                                <i class="fa-solid fa-check fa-lg"></i>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="card border-0 shadow-sm h-100">
+                                                    <div class="card-body">
+                                                        <div class="d-flex align-items-center justify-content-between">
+                                                            <div>
+                                                                <p class="text-muted small mb-1">% Entrega</p>
+                                                                <h3 class="mb-0 fw-bold" id="studentDeliveryPercent">0%</h3>
+                                                            </div>
+                                                            <div class="bg-success text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                                                <i class="fa-solid fa-percent fa-lg"></i>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-3">
+                                                <div class="card border-0 shadow-sm h-100">
+                                                    <div class="card-body">
+                                                        <div class="d-flex align-items-center justify-content-between">
+                                                            <div>
+                                                                <p class="text-muted small mb-1">Calificadas</p>
+                                                                <h3 class="mb-0 fw-bold" id="studentGraded">0</h3>
+                                                            </div>
+                                                            <div class="bg-primary text-white rounded-circle d-flex align-items-center justify-content-center" style="width: 50px; height: 50px;">
+                                                                <i class="fa-solid fa-clipboard-check fa-lg"></i>
+                                                            </div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
-                                        <div class="col-md-6">
-                                            <div class="card border-0 shadow-sm">
-                                                <div class="card-body">
-                                                    <p class="small text-muted mb-2">Tarde</p>
-                                                    <h4 class="fw-bold" id="studentLate">0</h4>
-                                                    <div class="progress" style="height: 8px;">
-                                                        <div class="progress-bar bg-warning" id="studentLateBar" style="width: 0%"></div>
+                                        <div class="row g-3">
+                                            <div class="col-md-6">
+                                                <div class="card border-0 shadow-sm">
+                                                    <div class="card-body">
+                                                        <p class="small text-muted mb-2">A tiempo</p>
+                                                        <h4 class="fw-bold" id="studentOnTime">0</h4>
+                                                        <div class="progress" style="height: 8px;">
+                                                            <div class="progress-bar bg-success" id="studentOnTimeBar" style="width: 0%"></div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="card border-0 shadow-sm">
-                                                <div class="card-body">
-                                                    <p class="small text-muted mb-2">No entregadas</p>
-                                                    <h4 class="fw-bold" id="studentNotDelivered">0</h4>
-                                                    <div class="progress" style="height: 8px;">
-                                                        <div class="progress-bar bg-danger" id="studentNotDeliveredBar" style="width: 0%"></div>
+                                            <div class="col-md-6">
+                                                <div class="card border-0 shadow-sm">
+                                                    <div class="card-body">
+                                                        <p class="small text-muted mb-2">Tarde</p>
+                                                        <h4 class="fw-bold" id="studentLate">0</h4>
+                                                        <div class="progress" style="height: 8px;">
+                                                            <div class="progress-bar bg-warning" id="studentLateBar" style="width: 0%"></div>
+                                                        </div>
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <div class="card border-0 shadow-sm">
-                                                <div class="card-body">
-                                                    <p class="small text-muted mb-2">Calificadas</p>
-                                                    <h4 class="fw-bold" id="studentTotalGraded">0</h4>
+                                            <div class="col-md-6">
+                                                <div class="card border-0 shadow-sm">
+                                                    <div class="card-body">
+                                                        <p class="small text-muted mb-2">No entregadas</p>
+                                                        <h4 class="fw-bold" id="studentNotDelivered">0</h4>
+                                                        <div class="progress" style="height: 8px;">
+                                                            <div class="progress-bar bg-danger" id="studentNotDeliveredBar" style="width: 0%"></div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <div class="col-md-6">
+                                                <div class="card border-0 shadow-sm">
+                                                    <div class="card-body">
+                                                        <p class="small text-muted mb-2">Calificadas</p>
+                                                        <h4 class="fw-bold" id="studentTotalGraded">0</h4>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                <% } else { %>
+                                    <div class="text-center py-5">
+                                        <i class="fa-solid fa-inbox fa-3x text-muted opacity-25 mb-3"></i>
+                                        <p class="text-muted mb-0">No hay estudiantes o tareas suficientes para mostrar rendimiento.</p>
+                                    </div>
+                                <% } %>
                             <% } else { %>
                                 <div class="alert alert-info" role="alert">
                                     <i class="fa-solid fa-circle-info"></i> El rendimiento de clase solo está disponible para profesores.
@@ -563,12 +625,52 @@
                                             <small class="text-muted"><%= post.fecha_orden ? new Date(post.fecha_orden).toLocaleDateString() : '' %></small>
                                         </div>
                                     </div>
-                                    <div class="mb-1 fw-semibold"><%= post.titulo || 'Anuncio' %></div>
+                                    <div class="d-flex justify-content-between align-items-start mb-1">
+                                        <div class="mb-1 fw-semibold"><%= post.titulo || 'Anuncio' %></div>
+                                        <% if (isProfesor || (user && post.autor_id === user.id)) { %>
+                                            <button type="button" class="btn btn-sm btn-outline-danger" onclick="deletePost('<%= post.id %>')">Eliminar</button>
+                                        <% } %>
+                                    </div>
                                     <p class="small text-muted mb-0"><%= post.descripcion || post.contenido || '' %></p>
+                                    <% if (post.archivo_url) { %>
+                                        <p class="small mb-0 mt-2"><a href="<%= post.archivo_url %>" target="_blank" class="link-primary">Ver archivo adjunto</a></p>
+                                    <% } %>
                                 </div>
                             </div>
                         <% }) %>
                     <% } %>
+                </div>
+            </div>
+        </div>
+
+        <div id="sectionRubrics" class="d-none">
+            <div class="card border-0 shadow-sm rounded-4">
+                <div class="card-body">
+                    <div class="d-flex align-items-center justify-content-between mb-4 gap-3">
+                        <div>
+                            <h2 class="h5 fw-bold mb-1">Rúbricas estándar</h2>
+                            <p class="mb-0 text-muted">Gestiona los criterios de calificación reusables.</p>
+                        </div>
+                        <button type="button" class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#rubricModal" onclick="setTimeout(loadAllRubrics, 300)">
+                            <i class="fa-solid fa-plus me-2"></i> Nueva rúbrica
+                        </button>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Criterio</th>
+                                    <th>Descripción</th>
+                                    <th class="text-center">Puntos máximos</th>
+                                    <th class="text-center">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rubricsTableBody">
+                                <tr><td colspan="4" class="text-center text-muted py-4">Cargando rúbricas...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
         </div>
@@ -580,9 +682,24 @@
     <script type="application/json" id="studentPerformanceData"><%- studentPerformanceMapJson || '{}' %></script>
     <script src="/public/js/dashboard.js"></script>
     <script src="/public/js/clase.js"></script>
+    <script src="/public/js/support.js"></script>
     <script src="/public/js/calificar.js"></script>
     <script src="/public/js/tareas.js"></script>
+    <script src="/public/js/rubrics.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const modal = document.getElementById('createAssignmentModal');
+            if (modal) {
+                modal.addEventListener('shown.bs.modal', function() {
+                    loadRubricsForAssignment();
+                });
+            }
+        });
+    </script>
+    <script src="/public/js/entrega.js"></script>
     <%- include('modals/assigmentModal') %>
     <%- include('modals/classModals') %>
+    <%- include('modals/supportModal') %>
+    <%- include('modals/rubricModal') %>
 </body>
 </html>

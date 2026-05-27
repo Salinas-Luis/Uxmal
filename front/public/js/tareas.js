@@ -140,12 +140,12 @@ async function createUnit(claseId) {
 
         if (response.ok) {
             await showSuccess('¡Unidad creada!', 'La unidad ha sido creada correctamente');
-            // Cerrar modal
+
             const modal = bootstrap.Modal.getInstance(document.getElementById('createUnitModal'));
             modal?.hide();
-            // Limpiar formulario
+
             document.getElementById('unitForm').reset();
-            // Recargar unidades
+
             loadUnitsForClass(claseId);
         } else {
             const errorData = await response.json();
@@ -345,4 +345,41 @@ async function deleteUnit(unitId) {
             showError('Error de conexión', 'No se pudo conectar con el servidor');
         }
     });
+}
+
+async function detectAssignmentCompletion() {
+    const instructions = document.getElementById('taskInstructions')?.value || '';
+    const resultEl = document.getElementById('aiCompletionResult');
+    if (!instructions) {
+        resultEl.textContent = 'Escribe las instrucciones primero';
+        return;
+    }
+    if (instructions.length > 5000) {
+        resultEl.textContent = 'Texto demasiado largo (límite 5000 caracteres)';
+        return;
+    }
+    resultEl.textContent = 'Analizando...';
+    try {
+        const res = await fetch('/api/integrations/sapling', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ text: instructions })
+        });
+        const json = await res.json();
+        if (!res.ok) {
+            resultEl.textContent = json.error || 'Error en análisis';
+            return;
+        }
+        const rawPercent = Number(json.percent);
+        if (!Number.isFinite(rawPercent)) {
+            resultEl.textContent = 'IA: N/A';
+            return;
+        }
+        const displayPercent = rawPercent <= 1 ? rawPercent * 100 : rawPercent;
+        resultEl.textContent = `IA: ${displayPercent.toFixed(1)}% hecho`;
+    } catch (err) {
+        console.error('Sapling detect error:', err);
+        resultEl.textContent = 'Error al analizar con IA';
+    }
 }

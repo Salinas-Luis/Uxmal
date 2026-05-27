@@ -24,7 +24,7 @@
                     <div class="list-group list-group-flush">
                         <% alumnos.forEach(alumno => { %>
                             <button class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" 
-                                    onclick="verDetalleEntrega('<%= JSON.stringify(alumno) %>')">
+                                    onclick='verDetalleEntrega(<%- JSON.stringify(alumno) %>)'>
                                 <div>
                                     <p class="mb-0 small fw-bold"><%= alumno.nombre %> <%= alumno.apellido %></p>
                                     <span class="badge <%= alumno.entrega ? 'bg-success' : 'bg-secondary' %>" style="font-size: 0.7rem;">
@@ -53,5 +53,14 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="/public/js/swal-utils.js"></script>
     <script src="/public/js/calificar.js"></script>
+    <script src="/public/js/rubrics.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const tareaId = '<%= tarea.id %>';
+            if (tareaId) {
+                loadRubricsForGrading(tareaId);
+            }
+        });
+    </script>
 </body>
 </html>

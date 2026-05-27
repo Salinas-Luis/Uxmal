@@ -33,23 +33,14 @@
                             <input type="file" id="taskFile" name="archivo_guia" class="form-control" accept=".pdf,.jpg,.png">
                         </div>
                         <div class="mb-3">
-                            <label class="form-label small fw-bold">Rúbricas estándar</label>
-                            <div class="border rounded p-3 bg-light" style="max-height: 220px; overflow-y: auto;">
-                                <% if (rubricas && rubricas.length > 0) { %>
-                                    <% rubricas.forEach(rubrica => { %>
-                                        <div class="form-check mb-2">
-                                            <input class="form-check-input" type="checkbox" value="<%= rubrica.id %>" id="rubrica_<%= rubrica.id %>" name="rubricaIds">
-                                            <label class="form-check-label" for="rubrica_<%= rubrica.id %>">
-                                                <strong><%= rubrica.criterio %></strong> - <%= rubrica.puntos_maximos %> pts
-                                            </label>
-                                            <% if (rubrica.descripcion) { %>
-                                                <div class="small text-muted ms-4"><%= rubrica.descripcion %></div>
-                                            <% } %>
-                                        </div>
-                                    <% }) %>
-                                <% } else { %>
-                                    <p class="small text-muted mb-0">No hay rúbricas estandarizadas disponibles.</p>
-                                <% } %>
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <label class="form-label small fw-bold mb-0">Rúbricas estándar</label>
+                                <button type="button" class="menu-button-sm" data-bs-toggle="modal" data-bs-target="#rubricModal" onclick="setTimeout(loadAllRubrics, 300)">
+                                    <i class="fa-solid fa-plus"></i> Crear rúbrica
+                                </button>
+                            </div>
+                            <div id="rubricsCheckboxContainer" class="border rounded p-3 bg-light" style="max-height: 220px; overflow-y: auto;">
+                                <p class="small text-muted mb-0">Cargando rúbricas...</p>
                             </div>
                         </div>
                     </div>
@@ -58,6 +49,29 @@
             <div class="modal-footer border-0">
                 <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cerrar</button>
                 <button type="button" class="btn btn-primary px-4" onclick="publishAssignment('<%= clase.id %>')">Asignar</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="editAssignmentModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header">
+                <h5 class="modal-title">Asignar a unidad</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label small fw-bold">Seleccionar unidad</label>
+                    <select id="editTaskUnit" class="form-control">
+                        <option value="">-- Sin unidad --</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer border-0">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-primary px-4" onclick="saveTaskUnit()">Guardar</button>
             </div>
         </div>
     </div>

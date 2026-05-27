@@ -13,6 +13,10 @@ document.getElementById('registerForm')?.addEventListener('submit', async (e) =>
     if (!validateNotEmpty(apellido, 'El apellido')) return;
     if (!validateEmail(email)) return;
     if (!validateNotEmpty(password, 'La contraseña')) return;
+    if (password.length > 16) {
+        showError('Contraseña demasiado larga', 'La contraseña no debe exceder 16 caracteres');
+        return;
+    }
     if (!validatePassword(password)) return;
 
     if (confirmPassword && password !== confirmPassword) {

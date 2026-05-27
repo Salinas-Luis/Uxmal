@@ -229,3 +229,109 @@ function showCustomAlert(title, htmlContent, icon = 'info') {
         confirmButtonText: 'Aceptar'
     });
 }
+function isSpeechRecognitionSupported() {
+    return !!(window.SpeechRecognition || window.webkitSpeechRecognition);
+}
+
+function startVoiceDictation(fieldId, button) {
+    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!Recognition) {
+        return showError('Dictado no disponible', 'Tu navegador no soporta dictado de voz.');
+    }
+
+    const textarea = document.getElementById(fieldId);
+    if (!textarea) return;
+
+    const originalText = button?.textContent || 'Dictar';
+    if (button) {
+        button.disabled = true;
+        button.textContent = 'Escuchando...';
+    }
+
+    const recognition = new Recognition();
+    recognition.lang = 'es-ES';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+
+    recognition.onresult = (event) => {
+        const transcript = Array.from(event.results)
+            .map(result => result[0].transcript)
+            .join(' ')
+            .trim();
+
+        if (transcript) {
+            textarea.value = textarea.value ? `${textarea.value} ${transcript}` : transcript;
+        }
+    };
+
+    recognition.onerror = (event) => {
+        const errCode = event?.error || '';
+        let friendly = 'No se pudo usar el micrófono.';
+        if (errCode === 'network') friendly = 'Error de red durante el dictado. Revisa tu conexión.';
+        else if (errCode === 'no-speech') friendly = 'No se detectó voz. Intenta de nuevo.';
+        else if (errCode === 'not-allowed' || errCode === 'service-not-allowed') friendly = 'Permiso denegado para usar el micrófono. Revisa los permisos del navegador.';
+        else if (errCode === 'aborted') friendly = 'Dictado abortado.';
+        else if (errCode === 'audio-capture') friendly = 'No se pudo acceder al micrófono.';
+
+        showError('Error de dictado', friendly + (errCode ? ` (${errCode})` : ''));
+    };
+
+    recognition.onend = () => {
+        if (button) {
+            button.disabled = false;
+            button.textContent = originalText;
+        }
+    };
+
+    try {
+        recognition.start();
+    } catch (err) {
+        if (button) {
+            button.disabled = false;
+            button.textContent = originalText;
+        }
+        showError('Error de dictado', 'No se pudo iniciar el micrófono.');
+    }
+}
+
+async function transcribeAudioFileToField(fieldId, fileInputId, bucket = 'anuncios') {
+    const textarea = document.getElementById(fieldId);
+    const fileInput = document.getElementById(fileInputId);
+
+    if (!textarea || !fileInput || !fileInput.files[0]) {
+        return showError('Archivo requerido', 'Selecciona un archivo de audio primero.');
+    }
+
+    const file = fileInput.files[0];
+    if (!file.type.startsWith('audio/')) {
+        return showError('Archivo no válido', 'Selecciona un archivo de audio.');
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('bucket', bucket);
+
+    const loading = showLoading('Transcribiendo audio', 'Espera un momento...');
+
+    try {
+        const response = await fetch('/api/integrations/transcribe-upload', {
+            method: 'POST',
+            body: formData,
+            credentials: 'include'
+        });
+        const json = await response.json();
+
+        if (!response.ok) {
+            throw new Error(json.error || 'No se pudo transcribir el audio');
+        }
+
+        textarea.value = textarea.value ? `${textarea.value}\n${json.transcript}` : json.transcript;
+        fileInput.value = '';
+        await showSuccess('Transcripción completa', 'El audio se ha convertido a texto correctamente.');
+    } catch (err) {
+        showError('Error al transcribir', err.message || 'No se pudo transcribir el audio.');
+    } finally {
+        Swal.close();
+    }
+}

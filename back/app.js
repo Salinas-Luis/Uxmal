@@ -11,6 +11,8 @@ const assignmentRoutes = require('./routes/assigmentRoutes');
 const unitsRoutes = require('./routes/unitsRoutes');
 const rubricRoutes = require('./routes/rubricRoutes');
 const postRoutes = require('./routes/postRoutes');
+const supportRoutes = require('./routes/supportRoutes');
+const integrationRoutes = require('./routes/integrationRoutes');
 const PostModel = require('./model/postModel');
 const session = require('express-session');
 const cookieParser = require('cookie-parser');
@@ -42,7 +44,8 @@ app.use('/api/assignments', authenticateToken, assignmentRoutes);
 app.use('/api/units', authenticateToken, unitsRoutes);
 app.use('/api/rubrics', authenticateToken, rubricRoutes);
 app.use('/api/posts', authenticateToken, postRoutes);
-
+app.use('/api/support', authenticateToken, supportRoutes);
+app.use('/api/integrations', authenticateToken, integrationRoutes);
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../front/views/index.html'));
@@ -87,9 +90,11 @@ app.get('/dashboard', authenticateToken, async (req, res) => {
             isProfesor: item.clases.profesor_id === user.id
         }));
 
+        const selectedSection = req.query.section || 'classes';
         res.render('dashboard', { 
             user: user, 
-            clases: listaClases || [] 
+            clases: listaClases || [],
+            selectedSection
         });
 
     } catch (error) {
@@ -284,6 +289,17 @@ app.get('/clase/:id', authenticateToken, async (req, res) => {
         console.error("Error al cargar la clase:", error);
         res.status(500).send("Error al cargar la clase");
     }
+});
+
+app.use((err, req, res, next) => {
+    console.error('Unhandled error middleware:', err && err.message ? err.message : err);
+    if (err && err.code === 'LIMIT_FILE_SIZE') {
+        return res.status(413).json({ error: 'El archivo es demasiado grande. Límite: 20MB' });
+    }
+    if (err && err.name === 'MulterError') {
+        return res.status(400).json({ error: err.message || 'Error al procesar el archivo' });
+    }
+    res.status(err?.status || 500).json({ error: err?.message || 'Error interno del servidor' });
 });
 
 app.get('/clase/:id/rendimiento', authenticateToken, async (req, res) => {
@@ -524,6 +540,15 @@ app.get('/clase/:id/tareas', authenticateToken, async (req, res) => {
     }
 });
 
+app.get('/clase/:id/entregadas', authenticateToken, async (req, res) => {
+    try {
+        res.redirect('/dashboard?section=submissions');
+    } catch (error) {
+        console.error('Error redirigiendo a entregadas:', error);
+        res.status(500).send('Error al redirigir a Mis entregas');
+    }
+});
+
 app.get('/tarea/:id', authenticateToken, async (req, res) => {
     try {
         const tareaId = req.params.id;
@@ -664,6 +689,10 @@ app.get('/clase/:id/personas', authenticateToken, async (req, res) => {
 });
 app.get('/perfil', authenticateToken, (req, res) => {
     res.render('perfil', { user: req.user || req.session?.user || {} });
+});
+
+app.get('/mis-reportes', authenticateToken, (req, res) => {
+    res.render('support_reports', { user: req.user || req.session?.user || {} });
 });
 app.get('/logout', (req, res) => {
     req.session.destroy((err) => {

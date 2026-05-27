@@ -1,23 +1,36 @@
 async function createPost(claseId) {
     const contenido = document.getElementById('postContent')?.value.trim();
+    const archivoInput = document.getElementById('postFile');
+    const tieneArchivo = archivoInput?.files?.length > 0;
+    const tieneContenido = contenido.length > 0;
 
-    if (!validateNotEmpty(contenido, 'El contenido')) return;
+    if (!tieneContenido && !tieneArchivo) {
+        showError('Error al publicar', 'Debes escribir texto o adjuntar un archivo antes de publicar.');
+        return;
+    }
 
     showLoading('Publicando anuncio', 'Por favor espere...');
 
     try {
+        const formData = new FormData();
+        formData.append('contenido', contenido);
+        formData.append('clase_id', claseId);
+        if (archivoInput?.files?.length > 0) {
+            formData.append('archivo', archivoInput.files[0]);
+        }
+
         const response = await fetch('/api/posts', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            body: JSON.stringify({ contenido, clase_id: claseId })
+            body: formData
         });
 
         if (response.ok) {
             await showSuccess('¡Anuncio publicado!', 'El anuncio ha sido publicado correctamente');
             location.reload();
         } else {
-            showError('Error al publicar', 'No se pudo publicar el anuncio');
+            const errorData = await response.json().catch(() => null);
+            showError('Error al publicar', errorData?.error || 'No se pudo publicar el anuncio');
         }
     } catch (error) {
         showError('Error de conexión', 'No se pudo conectar con el servidor');
@@ -25,7 +38,7 @@ async function createPost(claseId) {
 }
 
 function switchSection(section) {
-    const sections = ['tasks', 'personas', 'rendimiento'];
+    const sections = ['tasks', 'personas', 'rendimiento', 'rubrics'];
 
     sections.forEach(name => {
         const el = document.getElementById(`section${name.charAt(0).toUpperCase() + name.slice(1)}`);
@@ -42,10 +55,15 @@ function switchSection(section) {
         showTaskView('overview');
     }
 
+    if (section === 'rubrics') {
+        loadAllRubrics();
+    }
+
     const buttons = {
         tasks: 'tabTasksBtn',
         personas: 'tabPersonasBtn',
-        rendimiento: 'tabRendimientoBtn'
+        rendimiento: 'tabRendimientoBtn',
+        rubrics: 'tabRubricsBtn'
     };
 
     Object.entries(buttons).forEach(([name, id]) => {
@@ -358,5 +376,43 @@ async function uploadClassBanner(classId, event) {
         }
     } catch (error) {
         showError('Error de conexión', 'No se pudo conectar con el servidor');
+    }
+}
+
+async function transcribeAnnouncementFile() {
+    const fileInput = document.getElementById('postFile');
+    const contentEl = document.getElementById('postContent');
+    if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+        alert('Selecciona un archivo de audio primero');
+        return;
+    }
+    const file = fileInput.files[0];
+    if (!file.type.startsWith('audio/')) {
+        alert('El archivo seleccionado no parece ser audio');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('bucket', 'anuncios');
+
+    try {
+        const res = await fetch('/api/integrations/transcribe-upload', {
+            method: 'POST',
+            credentials: 'include',
+            body: formData
+        });
+        const json = await res.json();
+        if (!res.ok) {
+            alert(json.error || 'No se pudo transcribir');
+            return;
+        }
+        if (json.transcript) {
+            contentEl.value = (contentEl.value ? contentEl.value + "\n\n" : "") + json.transcript;
+            alert('Transcripción añadida al contenido');
+        }
+    } catch (err) {
+        console.error('Transcribe error:', err);
+        alert('Error al transcribir audio');
     }
 }

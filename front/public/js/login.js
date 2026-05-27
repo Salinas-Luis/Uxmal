@@ -8,6 +8,10 @@ document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
     if (!validateNotEmpty(email, 'El correo electrónico')) return;
     if (!validateEmail(email)) return;
     if (!validateNotEmpty(password, 'La contraseña')) return;
+    if (password.length > 16) {
+        showError('Contraseña demasiado larga', 'La contraseña no debe exceder 16 caracteres');
+        return;
+    }
 
     btn.disabled = true;
     btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Verificando...';

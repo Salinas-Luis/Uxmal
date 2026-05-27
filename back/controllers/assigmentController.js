@@ -224,9 +224,14 @@ exports.deleteAssignment = async (req, res) => {
 
 exports.submitSubmission = async (req, res) => {
     try {
-        const { tarea_id, estudiante_id, comentario_alumno } = req.body;
+        const { tarea_id, comentario_alumno } = req.body;
+        const estudiante_id = req.user?.id || req.body.estudiante_id;
         const file = req.file;
         let fileUrl = null;
+
+        if (!estudiante_id) {
+            return res.status(400).json({ error: 'No se pudo identificar al estudiante' });
+        }
 
         if (file) {
             const fileName = `${Date.now()}_${file.originalname}`;
@@ -326,10 +331,6 @@ exports.cancelSubmission = async (req, res) => {
 
         if (entrega.estudiante_id !== user.id) {
             return res.status(403).json({ error: "No tienes permiso para anular esta entrega" });
-        }
-
-        if (entrega.calificacion !== null && entrega.calificacion !== undefined) {
-            return res.status(400).json({ error: "No puedes anular una entrega que ya ha sido calificada" });
         }
 
         const { error: deleteError } = await supabase
