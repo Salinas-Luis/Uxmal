@@ -102,7 +102,7 @@ function verDetalleEntrega(alumno) {
             <h6 class="fw-bold mb-3">Archivo entregado:</h6>
             ${archivoHtml}
 
-            <div id="rubricGradingContainer" style="display: none;"></div>
+            <div id="rubricGradingContainer" class="mt-4"></div>
 
             ${alumno.entrega.comentario_alumno ? `
                 <h6 class="fw-bold mt-4 mb-3">Comentario del alumno:</h6>

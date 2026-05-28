@@ -348,6 +348,36 @@ async function deleteAssignment(assignmentId) {
     });
 }
 
+async function deleteClass(claseId, nombreClase) {
+    showConfirm(
+        '¿Eliminar clase?',
+        `¿Estás seguro de que deseas eliminar la clase "${nombreClase}"? Esta acción no se puede deshacer y se eliminarán todas las tareas, entregas y rúbricas asociadas.`,
+        'Sí, eliminar clase',
+        'Cancelar'
+    ).then(async (result) => {
+        if (!result.isConfirmed) return;
+
+        showLoading('Eliminando clase', 'Por favor espere...');
+
+        try {
+            const response = await fetch(`/api/classes/${claseId}`, {
+                method: 'DELETE',
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                await showSuccess('Clase eliminada', 'La clase ha sido eliminada correctamente');
+                window.location.href = '/dashboard';
+            } else {
+                const errorData = await response.json().catch(() => null);
+                showError('Error al eliminar', errorData?.error || 'No se pudo eliminar la clase');
+            }
+        } catch (error) {
+            showError('Error de conexión', 'No se pudo conectar con el servidor');
+        }
+    });
+}
+
 async function uploadClassBanner(classId, event) {
     const file = event.target.files[0];
     

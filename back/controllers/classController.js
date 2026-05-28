@@ -272,6 +272,11 @@ exports.deleteClass = async (req, res) => {
             .eq('clase_id', classId);
 
         await supabase
+            .from('rubricas')
+            .delete()
+            .eq('clase_id', classId);
+
+        await supabase
             .from('anuncios')
             .delete()
             .eq('clase_id', classId);

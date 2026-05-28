@@ -81,7 +81,7 @@ exports.createGlobalRubric = async (req, res) => {
 
         let claseIdToUse = clase_id;
 
-        // Si viene clase_id, validar que el usuario sea profesor de esa clase
+      
         if (clase_id) {
             const { data: clase, error: claseError } = await supabase
                 .from('clases')
@@ -100,7 +100,7 @@ exports.createGlobalRubric = async (req, res) => {
             claseIdToUse = clase_id;
         }
 
-        // Si viene tarea_id y no hay clase_id, extraer clase_id de la tarea
+       
         if (tarea_id && !clase_id) {
             const { data: tarea } = await supabase
                 .from('tareas')
@@ -111,7 +111,7 @@ exports.createGlobalRubric = async (req, res) => {
             if (tarea) {
                 claseIdToUse = tarea.clase_id;
 
-                // Validar permisos sobre la clase
+                
                 const { data: clase } = await supabase
                     .from('clases')
                     .select('profesor_id')

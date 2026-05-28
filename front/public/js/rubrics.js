@@ -384,3 +384,56 @@ async function loadStudentRubricGrades(entregaId) {
         console.error('Error al cargar calificaciones:', err);
     }
 }
+
+async function loadRubricsForTaskDetail(tareaId) {
+    try {
+        const response = await fetch(`/api/rubrics/task/${tareaId}`, {
+            credentials: 'include'
+        });
+        if (!response.ok) throw new Error('Error al cargar rúbricas');
+        const rubrics = await response.json();
+
+        const container = document.getElementById('rubricasDetalleContainer');
+        if (!container) return;
+
+        if (!rubrics || rubrics.length === 0) {
+            return;
+        }
+
+        let totalMaxPuntos = 0;
+        const rubricasHtml = rubrics.map(tr => {
+            const rubric = tr.rubricas || tr;
+            totalMaxPuntos += rubric.puntos_maximos;
+            return `
+                <div class="p-3 border-bottom">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <strong>${rubric.criterio}</strong>
+                            ${rubric.descripcion ? `<div class="small text-muted mt-1">${rubric.descripcion}</div>` : ''}
+                        </div>
+                        <span class="badge bg-info">${rubric.puntos_maximos} pts</span>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        container.innerHTML = `
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-light fw-bold">
+                    <i class="fa-solid fa-list-check me-2"></i> Rúbricas de evaluación
+                </div>
+                <div class="card-body p-0">
+                    ${rubricasHtml}
+                    <div class="p-3 bg-light">
+                        <div class="d-flex justify-content-between">
+                            <span>Puntos totales por rúbrica:</span>
+                            <strong>${totalMaxPuntos} puntos</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    } catch (err) {
+        console.error('Error al cargar rúbricas para detalles de tarea:', err);
+    }
+}
