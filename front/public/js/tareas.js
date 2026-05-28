@@ -3,7 +3,7 @@ async function publishAssignment(claseId) {
     const instructions = document.getElementById('taskInstructions')?.value.trim();
     const points = document.getElementById('taskPoints')?.value;
     const dueDate = document.getElementById('taskDueDate')?.value;
-    const dueDateMexico = dueDate ? toMexicoCityDateTimeWithOffset(dueDate) : '';
+    const dueDateMexico = dueDate ? toMexicoCityIsoString(dueDate) : '';
     const unitId = document.getElementById('taskUnit')?.value;
     const fileInput = document.getElementById('taskFile');
 
@@ -14,6 +14,14 @@ async function publishAssignment(claseId) {
 
     const rubricaCheckboxes = document.querySelectorAll('input[name="rubricaIds"]:checked');
     const rubricaIds = Array.from(rubricaCheckboxes).map(input => input.value);
+    const rubricaTotal = Array.from(rubricaCheckboxes).reduce((sum, input) => {
+        return sum + Number(input.dataset.max || 0);
+    }, 0);
+
+    if (rubricaIds.length > 0 && (rubricaTotal < 1 || rubricaTotal > 100)) {
+        showError('Error de rúbricas', 'La suma de puntos de las rúbricas seleccionadas debe estar entre 1 y 100.');
+        return;
+    }
 
     if (fileInput.files[0]) {
         if (!validateFileSize(fileInput.files[0], 20)) return;
@@ -173,6 +181,13 @@ function toMexicoCityDateTimeWithOffset(dateTimeLocal) {
     const [date, time] = dateTimeLocal.split('T');
     const offset = getMexicoCityOffsetForDate(dateTimeLocal);
     return `${date}T${time}:00${offset}`;
+}
+
+function toMexicoCityIsoString(dateTimeLocal) {
+    const offsetDateTime = toMexicoCityDateTimeWithOffset(dateTimeLocal);
+    if (!offsetDateTime) return '';
+    const date = new Date(offsetDateTime);
+    return isNaN(date.getTime()) ? '' : date.toISOString();
 }
 
 function getMexicoCityMinDateTime() {

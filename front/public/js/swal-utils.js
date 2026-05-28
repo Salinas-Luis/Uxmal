@@ -198,20 +198,51 @@ function validateDate(dateString, mustBeFuture = true) {
         showError('Fecha requerida', 'Por favor selecciona una fecha y hora');
         return false;
     }
-    
 
-    const [dateOnly, timeOnly] = dateString.split('T');
-    const [year, month, day] = dateOnly.split('-');
-    const [hours, minutes] = timeOnly.split(':');
-    const selectedDate = new Date(year, month - 1, day, hours, minutes, 0);
+    const selectedDate = parseMexicoCityDateTime(dateString);
+    if (!selectedDate) {
+        showError('Fecha inválida', 'La fecha y hora de entrega no es válida');
+        return false;
+    }
+
     const now = new Date();
-    
     if (mustBeFuture && selectedDate <= now) {
         showError('Fecha inválida', 'La fecha y hora de entrega debe ser posterior a la actual');
         return false;
     }
-    
+
     return true;
+}
+
+function parseMexicoCityDateTime(dateString) {
+    if (!dateString) return null;
+
+    const isoDate = new Date(dateString);
+    if (!isNaN(isoDate.getTime())) {
+        return isoDate;
+    }
+
+    const [dateOnly, timeOnly] = dateString.split('T');
+    if (!dateOnly || !timeOnly) return null;
+
+    const [year, month, day] = dateOnly.split('-').map(Number);
+    const [hours, minutes] = timeOnly.split(':').map(Number);
+    if ([year, month, day, hours, minutes].some(value => Number.isNaN(value))) return null;
+
+    const offset = getMexicoCityOffsetForDate(dateString);
+    const parsed = new Date(`${dateOnly}T${timeOnly}:00${offset}`);
+    return isNaN(parsed.getTime()) ? null : parsed;
+}
+
+function getMexicoCityOffsetForDate(dateTimeLocal) {
+    const [date] = dateTimeLocal.split('T');
+    const [year, month, day] = date.split('-').map(Number);
+
+    if (month > 4 && month < 10) return '-05:00';
+    if (month < 4 || month > 10) return '-06:00';
+    if (month === 4) return day >= 5 ? '-05:00' : '-06:00';
+    if (month === 10) return day >= 25 ? '-06:00' : '-05:00';
+    return '-06:00';
 }
 
 /**

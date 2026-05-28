@@ -89,7 +89,7 @@ async function createNewRubric() {
 
     if (!validateNotEmpty(criterio, 'El criterio')) return;
     if (!validateNotEmpty(puntos_maximos, 'Los puntos máximos')) return;
-    if (!validateRange(puntos_maximos, 1, 1000, 'Los puntos máximos')) return;
+    if (!validateRange(puntos_maximos, 1, 100, 'Los puntos máximos')) return;
 
     try {
         const payload = {
@@ -156,6 +156,7 @@ async function saveRubricChanges() {
 
     if (!validateNotEmpty(criterio, 'El criterio')) return;
     if (!validateNotEmpty(puntos_maximos, 'Los puntos máximos')) return;
+    if (!validateRange(puntos_maximos, 1, 100, 'Los puntos máximos')) return;
 
     try {
         const response = await fetch(`/api/rubrics/${id}`, {
@@ -229,7 +230,7 @@ async function loadRubricsForAssignment(claseId = null) {
 
         container.innerHTML = rubrics.map(r => `
             <div class="form-check">
-                <input class="form-check-input" type="checkbox" value="${r.id}" id="rubrica_${r.id}" name="rubricaIds">
+                <input class="form-check-input" type="checkbox" value="${r.id}" id="rubrica_${r.id}" name="rubricaIds" data-max="${r.puntos_maximos}">
                 <label class="form-check-label" for="rubrica_${r.id}">
                     <strong>${r.criterio}</strong> - ${r.puntos_maximos} pts
                     ${r.descripcion ? `<div class="small text-muted ms-4">${r.descripcion}</div>` : ''}

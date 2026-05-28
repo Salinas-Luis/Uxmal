@@ -14,19 +14,25 @@ function getMexicoCityOffset(year, month, day) {
 
 function parseMexicoCityDateTime(value) {
     if (!value) return null;
-    const normalized = value.length === 16 ? `${value}:00` : value;
-    if (/[+-]\d{2}:\d{2}$/.test(normalized) || normalized.endsWith('Z')) {
-        return new Date(normalized);
+
+    const trimmed = value.trim();
+    const hasOffset = /([Zz]|[+\-]\d{2}:\d{2})$/.test(trimmed);
+    if (hasOffset) {
+        const date = new Date(trimmed);
+        return isNaN(date.getTime()) ? null : date;
     }
 
-    const [datePart, timePart] = normalized.split('T');
+    const [datePart, timePart] = trimmed.split('T');
+    if (!datePart || !timePart) return null;
+
     const [year, month, day] = datePart.split('-').map(Number);
     const [hour, minute] = timePart.split(':').map(Number);
 
     if ([year, month, day, hour, minute].some(n => isNaN(n))) return null;
 
     const offset = getMexicoCityOffset(year, month, day);
-    return new Date(`${datePart}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00${offset}`);
+    const parsed = new Date(`${datePart}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00${offset}`);
+    return isNaN(parsed.getTime()) ? null : parsed;
 }
 
 exports.createAssignment = async (req, res) => {
@@ -61,6 +67,29 @@ exports.createAssignment = async (req, res) => {
         }
         if (!clase_id) {
             return res.status(400).json({ error: "La clase es obligatoria" });
+        }
+
+        let rubricaIds = [];
+        if (rubrica_ids) {
+            try {
+                rubricaIds = Array.isArray(rubrica_ids) ? rubrica_ids : JSON.parse(rubrica_ids);
+            } catch (parseError) {
+                rubricaIds = typeof rubrica_ids === 'string' ? rubrica_ids.split(',').map(id => id.trim()).filter(Boolean) : [];
+            }
+        }
+
+        if (Array.isArray(rubricaIds) && rubricaIds.length > 0) {
+            const { data: rubricasSeleccionadas, error: rubricasError } = await supabase
+                .from('rubricas')
+                .select('puntos_maximos')
+                .in('id', rubricaIds);
+
+            if (rubricasError) throw rubricasError;
+
+            const rubricaTotal = (rubricasSeleccionadas || []).reduce((sum, r) => sum + Number(r.puntos_maximos || 0), 0);
+            if (rubricaTotal < 1 || rubricaTotal > 100) {
+                return res.status(400).json({ error: "La suma de puntos de las rúbricas seleccionadas debe estar entre 1 y 100" });
+            }
         }
 
         const file = req.file; 
@@ -98,15 +127,6 @@ exports.createAssignment = async (req, res) => {
         if (dbError) throw dbError;
 
         const tareaId = createdAssignment?.[0]?.id;
-        let rubricaIds = [];
-
-        if (rubrica_ids) {
-            try {
-                rubricaIds = Array.isArray(rubrica_ids) ? rubrica_ids : JSON.parse(rubrica_ids);
-            } catch (parseError) {
-                rubricaIds = typeof rubrica_ids === 'string' ? rubrica_ids.split(',').map(id => id.trim()).filter(Boolean) : [];
-            }
-        }
 
         if (tareaId && Array.isArray(rubricaIds) && rubricaIds.length > 0) {
             for (const rubricaId of rubricaIds) {

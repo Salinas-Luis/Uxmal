@@ -124,6 +124,10 @@ exports.createGlobalRubric = async (req, res) => {
             }
         }
 
+        if (!Number.isFinite(Number(puntos_maximos)) || Number(puntos_maximos) < 1 || Number(puntos_maximos) > 100) {
+            return res.status(400).json({ error: 'Los puntos máximos de la rúbrica deben estar entre 1 y 100' });
+        }
+
         const { data, error } = await RubricModel.create({
             criterio,
             descripcion,
@@ -185,6 +189,10 @@ exports.createRubric = async (req, res) => {
 
         if (!clase || clase.profesor_id !== user.id) {
             return res.status(403).json({ error: "No tienes permiso para agregar rúbricas" });
+        }
+
+        if (!Number.isFinite(Number(puntos_maximos)) || Number(puntos_maximos) < 1 || Number(puntos_maximos) > 100) {
+            return res.status(400).json({ error: 'Los puntos máximos de la rúbrica deben estar entre 1 y 100' });
         }
 
         const { data, error } = await RubricModel.create({
@@ -342,6 +350,10 @@ exports.updateRubric = async (req, res) => {
         const canEdit = await verifyTeacherForRubric(user, id);
         if (!canEdit) {
             return res.status(403).json({ error: "No tienes permiso para editar esta rúbrica" });
+        }
+
+        if (!Number.isFinite(Number(puntos_maximos)) || Number(puntos_maximos) < 1 || Number(puntos_maximos) > 100) {
+            return res.status(400).json({ error: 'Los puntos máximos de la rúbrica deben estar entre 1 y 100' });
         }
 
         const { data, error } = await RubricModel.update(id, {
