@@ -31,12 +31,12 @@ function verDetalleEntrega(alumno) {
                 <div class="text-end mt-2"><a href="${url}" target="_blank" class="submission-file-link">${fallbackFileName}</a></div>
             `;
         } else if (isPpt) {
-            const officeViewerUrl = `https://view.officeapps.live.com/op/embed?src=${encodeURIComponent(url)}`;
             archivoHtml = `
-                <div class="border rounded mb-3 bg-white">
-                    <iframe src="${officeViewerUrl}" style="width: 100%; height: 600px; border: none; border-radius: 4px;"></iframe>
+                <div class="border rounded p-3 bg-light mb-3">
+                    <i class="fa-solid fa-file-powerpoint me-2"></i>
+                    <span class="d-block mb-2">Vista previa no disponible para este formato.</span>
+                    <a href="${url}" target="_blank" class="text-decoration-none submission-file-link">Abrir archivo PPTX</a>
                 </div>
-                <div class="text-end mt-2"><a href="${url}" target="_blank" class="submission-file-link">${fallbackFileName}</a></div>
             `;
         } else if (isImage) {
             archivoHtml = `
@@ -123,7 +123,7 @@ function verDetalleEntrega(alumno) {
     `;
 
     // Cargar rúbricas para esta tarea
-    const tareaId = new URLSearchParams(window.location.search).get('tareaId') || 
+    const tareaId = window.currentTaskId || new URLSearchParams(window.location.search).get('tareaId') || 
                     document.querySelector('[data-tarea-id]')?.dataset.tareaId;
     if (tareaId && typeof loadRubricsForGrading === 'function') {
         setTimeout(() => loadRubricsForGrading(tareaId), 200);
