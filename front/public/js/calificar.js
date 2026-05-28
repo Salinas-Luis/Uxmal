@@ -17,6 +17,7 @@ function verDetalleEntrega(alumno) {
         const url = alumno.entrega.archivo_entrega_url;
         const fallbackFileName = alumno.entrega.nombre_archivo || url.split('/').pop().split('?')[0] || 'Archivo entregado';
         const isPdf = url.toLowerCase().includes('.pdf') || url.includes('application/pdf');
+        const isPpt = /\.(ppt|pptx)$/i.test(url);
         const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(url);
         const isAudio = /\.(mp3|m4a|wav|ogg|webm|aac)$/i.test(url);
         const isVideo = /\.(mp4|webm|ogg)$/i.test(url);
@@ -26,6 +27,14 @@ function verDetalleEntrega(alumno) {
             archivoHtml = `
                 <div class="border rounded mb-3 bg-white">
                     <iframe src="${url}" style="width: 100%; height: 600px; border: none; border-radius: 4px;"></iframe>
+                </div>
+                <div class="text-end mt-2"><a href="${url}" target="_blank" class="submission-file-link">${fallbackFileName}</a></div>
+            `;
+        } else if (isPpt) {
+            const officeViewerUrl = `https://view.officeapps.live.com/op/embed?src=${encodeURIComponent(url)}`;
+            archivoHtml = `
+                <div class="border rounded mb-3 bg-white">
+                    <iframe src="${officeViewerUrl}" style="width: 100%; height: 600px; border: none; border-radius: 4px;"></iframe>
                 </div>
                 <div class="text-end mt-2"><a href="${url}" target="_blank" class="submission-file-link">${fallbackFileName}</a></div>
             `;

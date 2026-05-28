@@ -55,12 +55,18 @@
     <script src="/public/js/calificar.js"></script>
     <script src="/public/js/rubrics.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        function initVerEntregasPage() {
             const tareaId = '<%= tarea.id %>';
-            if (tareaId) {
+            if (tareaId && typeof loadRubricsForGrading === 'function') {
                 loadRubricsForGrading(tareaId);
             }
-        });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initVerEntregasPage);
+        } else {
+            initVerEntregasPage();
+        }
     </script>
 </body>
 </html>

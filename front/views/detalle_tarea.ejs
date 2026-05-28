@@ -182,17 +182,23 @@
     <script src="/public/js/entrega.js"></script>
     <script src="/public/js/rubrics.js"></script>
     <script>
-        document.addEventListener('DOMContentLoaded', function() {
+        function initDetalleTareaPage() {
             const tareaId = '<%= tarea.id %>';
             if (tareaId && typeof loadRubricsForTaskDetail === 'function') {
                 loadRubricsForTaskDetail(tareaId);
             }
-            
+
             const entregaId = '<%= entrega?.id %>';
             if (entregaId && typeof loadStudentRubricGrades === 'function') {
                 loadStudentRubricGrades(entregaId);
             }
-        });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initDetalleTareaPage);
+        } else {
+            initDetalleTareaPage();
+        }
     </script>
 </body>
 </html>

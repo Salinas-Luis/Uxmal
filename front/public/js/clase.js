@@ -127,13 +127,40 @@ async function loadSectionHtml(url, sectionId, adjustDom) {
                 </div>
               `;
 
+        // Remueve scripts para insertarlos correctamente y así ejecutar cualquier código dependiente.
+        temp.querySelectorAll('script').forEach(script => script.remove());
+
         container.innerHTML = `${topActions}${temp.innerHTML}`;
+        await executeScriptsFromDocument(doc, container);
 
         if (adjustDom) adjustDom(container, sectionId);
     } catch (error) {
         container.innerHTML = `
             <div class="alert alert-danger">No se pudo cargar el contenido. Intenta de nuevo.</div>
         `;
+    }
+}
+
+async function executeScriptsFromDocument(doc, container) {
+    const scripts = Array.from(doc.querySelectorAll('script'));
+    for (const script of scripts) {
+        const scriptSrc = script.getAttribute('src');
+        if (scriptSrc) {
+            const alreadyLoaded = Array.from(document.querySelectorAll('script[src]')).some(existing => existing.getAttribute('src') === scriptSrc);
+            if (!alreadyLoaded) {
+                await new Promise(resolve => {
+                    const newScript = document.createElement('script');
+                    newScript.src = scriptSrc;
+                    newScript.onload = () => resolve();
+                    newScript.onerror = () => resolve();
+                    document.body.appendChild(newScript);
+                });
+            }
+        } else if (script.textContent && script.textContent.trim()) {
+            const inlineScript = document.createElement('script');
+            inlineScript.text = script.textContent;
+            container.appendChild(inlineScript);
+        }
     }
 }
 
@@ -159,6 +186,10 @@ function openTaskDetail(taskId, event) {
                 evt.preventDefault();
                 openTaskReview(taskId);
             });
+        }
+
+        if (typeof loadRubricsForTaskDetail === 'function') {
+            loadRubricsForTaskDetail(taskId);
         }
     });
 }
@@ -191,6 +222,10 @@ function openTaskReview(taskId, event) {
                 });
             }
         });
+
+        if (typeof loadRubricsForGrading === 'function') {
+            loadRubricsForGrading(taskId);
+        }
     });
 }
 
