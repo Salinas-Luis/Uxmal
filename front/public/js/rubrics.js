@@ -258,32 +258,49 @@ async function loadRubricsForGrading(tareaId) {
             return;
         }
 
-        container.innerHTML = '<h6 class="fw-bold mb-3">Calificar por rúbrica:</h6>' + 
-            rubrics.map((tr, idx) => {
-                const rubric = tr.rubricas || tr;
-                return `
-                    <div class="mb-3 p-3 border rounded bg-light">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <div>
-                                <strong>${rubric.criterio}</strong>
-                                ${rubric.descripcion ? `<div class="small text-muted">${rubric.descripcion}</div>` : ''}
-                            </div>
-                            <span class="badge bg-primary">${rubric.puntos_maximos} pts</span>
+        let totalMax = 0;
+        const rubricsHtml = rubrics.map((tr, idx) => {
+            const rubric = tr.rubricas || tr;
+            totalMax += rubric.puntos_maximos;
+            return `
+                <div class="mb-3 p-3 border rounded bg-light">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <strong>${rubric.criterio}</strong>
+                            ${rubric.descripcion ? `<div class="small text-muted">${rubric.descripcion}</div>` : ''}
                         </div>
-                        <input type="number" class="form-control form-control-sm rubric-grade-input" 
-                               id="rubricGrade_${rubric.id}" 
-                               min="0" max="${rubric.puntos_maximos}" 
-                               placeholder="Calificación" style="max-width: 120px;">
+                        <span class="badge bg-primary">${rubric.puntos_maximos} pts</span>
                     </div>
-                `;
-            }).join('');
+                    <input type="number" class="form-control form-control-sm rubric-grade-input" 
+                           id="rubricGrade_${rubric.id}" 
+                           min="0" max="${rubric.puntos_maximos}" 
+                           placeholder="Calificación" style="max-width: 120px;">
+                </div>
+            `;
+        }).join('');
+
+        container.innerHTML = `
+            <div class="mb-3">
+                <h6 class="fw-bold mb-3">Calificar por rúbrica:</h6>
+                ${rubricsHtml}
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mt-3">
+                    <div>
+                        <span class="small text-muted">Total de rúbrica:</span>
+                        <div class="fw-bold fs-5"><span id="rubricTotalScore">0</span> / <span id="rubricTotalMaxScore">${totalMax}</span></div>
+                    </div>
+                    <button type="button" class="btn btn-success btn-sm" onclick="saveRubricGrades(window.currentSubmissionId)">Confirmar calificación por rúbrica</button>
+                </div>
+            </div>
+        `;
+
+        attachRubricGradeListeners();
     } catch (err) {
         console.error('Error al cargar rúbricas para calificación:', err);
     }
 }
 
 
-async function saveRubricGrades(entregaId) {
+async function saveRubricGrades(entregaId = window.currentSubmissionId) {
     const inputs = document.querySelectorAll('.rubric-grade-input');
     const calificaciones = {};
     let valido = true;
@@ -320,8 +337,41 @@ async function saveRubricGrades(entregaId) {
         }
 
         await showSuccess('Calificaciones guardadas', 'Se registraron las puntuaciones por rúbrica');
+        updateRubricTotal();
     } catch (err) {
         showError('Error', err.message);
+    }
+}
+
+
+function attachRubricGradeListeners() {
+    const inputs = document.querySelectorAll('.rubric-grade-input');
+    inputs.forEach(input => {
+        input.addEventListener('input', updateRubricTotal);
+    });
+    updateRubricTotal();
+}
+
+function updateRubricTotal() {
+    const inputs = document.querySelectorAll('.rubric-grade-input');
+    let totalScore = 0;
+    let totalMax = 0;
+
+    inputs.forEach(input => {
+        const max = Number(input.getAttribute('max')) || 0;
+        const value = Number(input.value) || 0;
+        totalScore += value;
+        totalMax += max;
+    });
+
+    const totalScoreEl = document.getElementById('rubricTotalScore');
+    const totalMaxEl = document.getElementById('rubricTotalMaxScore');
+    if (totalScoreEl) totalScoreEl.textContent = totalScore;
+    if (totalMaxEl) totalMaxEl.textContent = totalMax;
+
+    const notaInput = document.getElementById('notaInput');
+    if (notaInput) {
+        notaInput.value = totalScore;
     }
 }
 

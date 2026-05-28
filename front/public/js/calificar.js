@@ -122,6 +122,8 @@ function verDetalleEntrega(alumno) {
         </div>
     `;
 
+    window.currentSubmissionId = alumno.entrega.id;
+
     // Cargar rúbricas para esta tarea
     const tareaId = window.currentTaskId || new URLSearchParams(window.location.search).get('tareaId') || 
                     document.querySelector('[data-tarea-id]')?.dataset.tareaId;
