@@ -690,15 +690,14 @@
         const claseId = '<%= clase.id %>';
         
         document.addEventListener('DOMContentLoaded', function() {
+            // Cargar rúbricas de la clase
+            loadRubricsByClass(claseId);
+            
             const modal = document.getElementById('createAssignmentModal');
             if (modal) {
                 modal.addEventListener('shown.bs.modal', function() {
                     loadRubricsForAssignment(claseId);
                 });
-            }
-            
-            if (window.rubricModalContext === 'management') {
-                loadRubricsByClass(claseId);
             }
         });
     </script>

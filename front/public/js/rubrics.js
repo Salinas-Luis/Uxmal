@@ -44,9 +44,13 @@ async function loadRubricsByClass(claseId) {
 }
 
 async function refreshRubricViews() {
-    await loadAllRubrics();
-    if (window.rubricModalContext === 'assignment') {
-        loadRubricsForAssignment();
+    if (window.rubricModalClaseId) {
+        await loadRubricsByClass(window.rubricModalClaseId);
+    } else {
+        await loadAllRubrics();
+    }
+    if (window.rubricModalContext === 'assignment' && window.rubricModalClaseId) {
+        loadRubricsForAssignment(window.rubricModalClaseId);
     }
 }
 
