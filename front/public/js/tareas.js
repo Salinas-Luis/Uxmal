@@ -3,7 +3,7 @@ async function publishAssignment(claseId) {
     const instructions = document.getElementById('taskInstructions')?.value.trim();
     const points = document.getElementById('taskPoints')?.value;
     const dueDate = document.getElementById('taskDueDate')?.value;
-    const dueDateMexico = dueDate ? toMexicoCityIsoString(dueDate) : '';
+    const dueDateIso = dueDate ? toDateTimeLocalIsoString(dueDate) : '';
     const unitId = document.getElementById('taskUnit')?.value;
     const fileInput = document.getElementById('taskFile');
 
@@ -31,7 +31,7 @@ async function publishAssignment(claseId) {
     formData.append('titulo', title);
     formData.append('descripcion', instructions);
     formData.append('puntos_maximos', points);
-    formData.append('fecha_entrega', dueDateMexico || dueDate);
+    formData.append('fecha_entrega', dueDateIso || dueDate);
     formData.append('clase_id', claseId);
     formData.append('rubrica_ids', JSON.stringify(rubricaIds));
     if (unitId) {
@@ -165,29 +165,15 @@ async function createUnit(claseId) {
     }
 }
 
-function getMexicoCityOffsetForDate(dateTimeLocal) {
-    const [date] = dateTimeLocal.split('T');
-    const [year, month, day] = date.split('-').map(Number);
-
-    if (month > 4 && month < 10) return '-05:00';
-    if (month < 4 || month > 10) return '-06:00';
-    if (month === 4) return day >= 5 ? '-05:00' : '-06:00';
-    if (month === 10) return day >= 25 ? '-06:00' : '-05:00';
-    return '-06:00';
-}
-
-function toMexicoCityDateTimeWithOffset(dateTimeLocal) {
+function toDateTimeLocalIsoString(dateTimeLocal) {
     if (!dateTimeLocal) return '';
     const [date, time] = dateTimeLocal.split('T');
-    const offset = getMexicoCityOffsetForDate(dateTimeLocal);
-    return `${date}T${time}:00${offset}`;
-}
+    if (!date || !time) return '';
 
-function toMexicoCityIsoString(dateTimeLocal) {
-    const offsetDateTime = toMexicoCityDateTimeWithOffset(dateTimeLocal);
-    if (!offsetDateTime) return '';
-    const date = new Date(offsetDateTime);
-    return isNaN(date.getTime()) ? '' : date.toISOString();
+    const [year, month, day] = date.split('-').map(Number);
+    const [hour, minute] = time.split(':').map(Number);
+    const localDate = new Date(year, month - 1, day, hour, minute, 0);
+    return isNaN(localDate.getTime()) ? '' : localDate.toISOString();
 }
 
 function getMexicoCityMinDateTime() {
