@@ -29,9 +29,9 @@
                             <%= tarea.clases.profesor.nombre %> <%= tarea.clases.profesor.apellido %> • <%= new Date(tarea.fecha_creacion).toLocaleDateString() %>
                         </p>
                         <div class="d-flex justify-content-between border-bottom pb-2 mt-2">
-                            <span class="fw-bold small"><%= tarea.puntos_maximos %> puntos&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;&ensp;</span>
+                            <span class="fw-bold small"><%= tarea.puntos_maximos %> puntos</span>
                             <small>
-                                Fecha de entrega: <%= new Date(tarea.fecha_entrega).toLocaleDateString('es-ES') %>
+                                Fecha de entrega: <%= new Date(tarea.fecha_entrega).toLocaleDateString('es-ES') %> a las <%= new Date(tarea.fecha_entrega).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }) %>
                             </small>
                         </div>
                     </div>

@@ -127,7 +127,7 @@ async function loadSectionHtml(url, sectionId, adjustDom) {
                 </div>
               `;
 
-        // Remueve scripts para insertarlos correctamente y así ejecutar cualquier código dependiente.
+        
         temp.querySelectorAll('script').forEach(script => script.remove());
 
         container.innerHTML = `${topActions}${temp.innerHTML}`;
