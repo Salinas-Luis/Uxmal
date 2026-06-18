@@ -24,6 +24,15 @@ document.addEventListener('DOMContentLoaded', function() {
     refreshSidebarToggle();
     window.addEventListener('resize', refreshSidebarToggle);
 
+    if (typeof setupClassCodeInputs === 'function') setupClassCodeInputs();
+    const joinModalEl = document.getElementById('joinModal');
+    if (joinModalEl) {
+        joinModalEl.addEventListener('shown.bs.modal', function () {
+            const first = document.querySelector('#classCodeContainer .code-input');
+            if (first) first.focus();
+        });
+    }
+
     if (sidebarToggle) {
         sidebarToggle.addEventListener('click', function() {
             sidebar.classList.toggle('show');
@@ -97,6 +106,86 @@ function escapeHtml(text) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
+}
+
+function setButtonLoading(btn, loading, label) {
+    if (!btn) return;
+    if (loading) {
+        if (!btn.dataset.origHtml) btn.dataset.origHtml = btn.innerHTML;
+        btn.disabled = true;
+        const spinner = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>';
+        btn.innerHTML = `${spinner}${label || btn.dataset.loadingLabel || 'Procesando...'}`;
+    } else {
+        if (btn.dataset.origHtml) {
+            btn.innerHTML = btn.dataset.origHtml;
+            delete btn.dataset.origHtml;
+        }
+        btn.disabled = false;
+    }
+}
+
+function getPrimaryButtonInModal(modalId) {
+    const modal = document.getElementById(modalId);
+    if (!modal) return null;
+    return modal.querySelector('.modal-footer .btn-primary');
+}
+
+function getClassCodeFromBoxes() {
+    const boxes = document.querySelectorAll('#classCodeContainer .code-input');
+    if (!boxes || boxes.length === 0) return null;
+    let code = '';
+    boxes.forEach(b => { code += (b.value || '').toUpperCase(); });
+    return code;
+}
+
+function setupClassCodeInputs() {
+    const container = document.getElementById('classCodeContainer');
+    if (!container) return;
+    const inputs = container.querySelectorAll('.code-input');
+    inputs.forEach((input, idx) => {
+        input.addEventListener('input', (e) => {
+            let val = (e.target.value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+            if (val.length > 1) val = val.charAt(0);
+            e.target.value = val;
+            if (val && idx < inputs.length - 1) {
+                inputs[idx + 1].focus();
+            }
+        });
+
+        input.addEventListener('keydown', (e) => {
+            // If user presses a printable character, replace current value and move focus
+            const isPrintable = e.key && e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey;
+            if (isPrintable) {
+                const ch = e.key.toUpperCase();
+                if (/^[A-Z0-9]$/.test(ch)) {
+                    e.preventDefault();
+                    e.target.value = ch;
+                    if (idx < inputs.length - 1) inputs[idx + 1].focus();
+                    return;
+                }
+            }
+
+            if (e.key === 'Backspace' && !e.target.value && idx > 0) {
+                inputs[idx - 1].focus();
+            }
+            if (e.key === 'ArrowLeft' && idx > 0) inputs[idx - 1].focus();
+            if (e.key === 'ArrowRight' && idx < inputs.length - 1) inputs[idx + 1].focus();
+        });
+
+        input.addEventListener('paste', (e) => {
+            e.preventDefault();
+            const paste = (e.clipboardData || window.clipboardData).getData('text').trim().toUpperCase();
+            const chars = paste.replace(/[^A-Z0-9]/g, '').split('');
+            for (let i = 0; i < inputs.length; i++) {
+                inputs[i].value = chars[i] || '';
+            }
+            // focus next empty or last
+            for (let j = 0; j < inputs.length; j++) {
+                if (!inputs[j].value) { inputs[j].focus(); return; }
+            }
+            inputs[inputs.length - 1].focus();
+        });
+    });
 }
 
 async function loadPendingAssignments() {
@@ -277,7 +366,7 @@ async function loadStudentSubmissions() {
     }
 }
 
-async function createClass() {
+async function createClass(btn) {
     const nombre_clase = document.getElementById('className')?.value.trim();
     const seccion = document.getElementById('classSection')?.value.trim();
     const materia = document.getElementById('classSubject')?.value.trim();
@@ -287,6 +376,8 @@ async function createClass() {
     if (!validateNotEmpty(nombre_clase, 'El nombre de la clase')) return;
     if (!validateNotEmpty(seccion, 'La sección')) return;
 
+    const btnEl = btn || getPrimaryButtonInModal('createModal');
+    setButtonLoading(btnEl, true, 'Creando...');
     try {
         const response = await fetch('/api/classes/create', {
             method: 'POST',
@@ -309,15 +400,22 @@ async function createClass() {
         }
     } catch (error) {
         showError('Error de conexión', 'No se pudo conectar con el servidor');
+    } finally {
+        setButtonLoading(btnEl, false);
     }
 }
 
-async function joinClass() {
-    const codigo_acceso = document.getElementById('classCode')?.value.trim();
+async function joinClass(btn) {
+    let codigo_acceso = null;
+    const fromBoxes = getClassCodeFromBoxes();
+    if (fromBoxes) codigo_acceso = fromBoxes;
+    if (!codigo_acceso) codigo_acceso = document.getElementById('classCode')?.value.trim();
     const user = JSON.parse(localStorage.getItem('user'));
 
     if (!validateNotEmpty(codigo_acceso, 'El código de clase')) return;
 
+    const btnEl = btn || getPrimaryButtonInModal('joinModal');
+    setButtonLoading(btnEl, true, 'Uniendo...');
     try {
         const response = await fetch('/api/classes/join', {
             method: 'POST',
@@ -338,6 +436,8 @@ async function joinClass() {
         }
     } catch (error) {
         showError('Error de conexión', 'No se pudo conectar con el servidor');
+    } finally {
+        setButtonLoading(btnEl, false);
     }
 }
 

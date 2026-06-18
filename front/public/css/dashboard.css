@@ -14,6 +14,12 @@
     --accent-blue: #4c63ff;
 }
 
+/* Ensure SweetAlert2 dialogs appear above Bootstrap modals */
+.swal2-container,
+.swal2-popup {
+    z-index: 3000 !important;
+}
+
 body {
     background-color: var(--page-bg) !important;
     color: var(--dashboard-text);
@@ -25,11 +31,21 @@ body {
     background: var(--panel-bg);
     border-color: var(--dashboard-border);
     min-height: 72px;
+    padding: 0;
 }
 
 .navbar-inner {
     position: relative;
     width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 12px;
+}
+
+.navbar .container-fluid {
+    padding-left: 0;
+    padding-right: 0;
 }
 
 #sidebarToggle {
@@ -53,6 +69,22 @@ body {
     gap: 1rem;
     flex-wrap: wrap;
     justify-content: flex-end;
+}
+
+.navbar .navbar-brand {
+    margin-left: 6px;
+}
+
+.navbar-actions {
+    margin-right: 6px;
+}
+
+
+.navbar .navbar-brand {
+    margin-left: 12px !important;
+}
+.navbar-actions {
+    margin-right: 20px !important;
 }
 
 .nav-action {
@@ -108,7 +140,7 @@ body {
     width: 280px;
     background: var(--panel-bg);
     border-right: 1px solid var(--dashboard-border);
-    padding: 32px 24px 110px;
+    padding: 12px 24px 110px;
     box-sizing: border-box;
     overflow-y: auto;
     overflow-x: hidden;
@@ -125,7 +157,7 @@ body {
     display: flex;
     align-items: center;
     gap: 16px;
-    margin-bottom: 36px;
+    margin-bottom: 12px;
 }
 
 .sidebar-logo {
@@ -186,6 +218,10 @@ body {
     margin: 0;
 }
 
+.sidebar-menu {
+    margin-top: 0;
+}
+
 .sidebar-menu li {
     margin-bottom: 10px;
 }
@@ -200,6 +236,38 @@ body {
     border-radius: 16px;
     font-weight: 600;
     transition: all 0.25s ease;
+}
+
+
+.code-input {
+    width: 56px;
+    height: 56px;
+    padding: 0.5rem;
+    text-align: center;
+    font-size: 1.25rem;
+    font-weight: 700;
+    border-radius: 8px;
+    border: 1px solid rgba(15,23,42,0.08);
+    background: #fff;
+}
+.code-input {
+    transition: box-shadow 180ms ease, transform 120ms ease, border-color 120ms ease, background 120ms ease;
+    will-change: transform, box-shadow;
+}
+
+.code-input:focus,
+.code-input:focus-visible {
+    outline: none;
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(76,99,255,0.12);
+    border-color: rgba(76,99,255,0.5);
+    background: #ffffff;
+}
+
+
+.code-input:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 18px rgba(76,99,255,0.04);
 }
 
 .sidebar-menu a.active {
@@ -283,7 +351,7 @@ body {
 }
 
 .main-content.container {
-    max-width: calc(100vw - 320px);
+    max-width: 100%;
 }
 
 @media (min-width: 992px) {
@@ -298,7 +366,15 @@ body {
     }
 
     .sidebar {
+        top: 72px;
+        height: calc(100vh - 72px);
         transform: translateX(0);
+    }
+
+    .navbar-logo {
+        height: 44px;
+        display: inline-block;
+        object-fit: contain;
     }
 
     .overlay {
@@ -373,6 +449,13 @@ body {
     transform: translate(-50%, -50%);
 }
 
+.modal-backdrop {
+    z-index: 1070 !important;
+}
+.modal {
+    z-index: 1075 !important;
+}
+
 .empty-copy h2 {
     font-size: 2rem;
     margin-bottom: 16px;
@@ -421,6 +504,12 @@ body {
 
 .action-btn i {
     color: var(--accent-blue);
+}
+
+
+.table th,
+.table td {
+    vertical-align: middle !important;
 }
 
 .overlay {
@@ -509,6 +598,14 @@ body {
     background-position: center;
     height: 100px;
     overflow: hidden;
+}
+
+
+.class-banner .small,
+.class-banner p.small {
+    color: #ffffff !important;
+    opacity: 0.95 !important;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.35);
 }
 
 .class-card .card-title {
@@ -659,5 +756,119 @@ body {
 @media (max-width: 768px) {
     .dashboard-option-card {
         min-height: 200px;
+    }
+}
+
+/* Fix: ensure main content and class sections take full width on small screens
+   The original rule used a calc(...) max-width which can produce a very narrow
+   content area on small viewports. Override it for smaller sizes so class
+   sections (tareas/personas/rendimiento/etc.) behave like the dashboard. */
+@media (max-width: 991.98px) {
+    .main-content.container {
+        max-width: 100% !important;
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+        box-sizing: border-box;
+    }
+
+    /* Make sure grid columns collapse naturally and cards span full width */
+    .main-content .row > [class*="col-"] {
+        flex: 0 0 100% !important;
+        max-width: 100% !important;
+    }
+
+    /* Ensure page header and cards use full width and keep padding */
+    .page-header-card,
+    .card {
+        width: 100% !important;
+    }
+
+    /* Sidebar toggle is visible on smaller screens; avoid shifting content */
+    .sidebar {
+        position: fixed;
+    }
+}
+
+/* Responsive tweaks for the page header to improve mobile layout */
+@media (max-width: 576px) {
+    .page-header-card {
+        padding: 16px !important;
+        border-radius: 20px !important;
+        width: 100% !important;
+        box-sizing: border-box !important;
+    }
+
+    .page-header-card .display-6,
+    .page-header-card h1 {
+        font-size: 1.25rem !important;
+        line-height: 1.1 !important;
+        margin-bottom: 0.25rem !important;
+    }
+
+    .page-header-card p {
+        font-size: 0.95rem !important;
+    }
+}
+
+/* Top navbar action layout improvements */
+.navbar-actions {
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.75rem;
+}
+
+.navbar-actions .nav-action,
+.navbar-actions .dropdown {
+    white-space: nowrap;
+}
+
+.navbar-actions .nav-action {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.45rem 0.85rem;
+    border-radius: 999px;
+}
+
+.navbar-actions .nav-action:hover {
+    background: rgba(76, 99, 255, 0.05);
+}
+
+.class-action-row {
+    align-items: center;
+}
+
+.class-action-group-end {
+    justify-content: flex-end;
+}
+
+@media (max-width: 768px) {
+    .class-action-row {
+        width: 100%;
+    }
+
+    .class-action-row .btn {
+        min-width: 160px;
+    }
+}
+
+@media (max-width: 576px) {
+    .class-action-row {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .class-action-row .class-action-group-start,
+    .class-action-row .class-action-group-end {
+        width: 100%;
+        justify-content: stretch;
+    }
+
+    .class-action-row .class-action-group-end {
+        margin-top: 0.75rem;
+    }
+
+    .class-action-row .btn {
+        width: 100%;
+        min-width: auto;
     }
 }

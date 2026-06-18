@@ -73,9 +73,152 @@ exports.listUserReports = async (req, res) => {
         const { data, error } = await SupportModel.getByUser(usuario.id);
         if (error) throw error;
 
-        res.json(data || []);
+      
+        const rows = data || [];
+        const assignedIds = [...new Set(rows.filter(r => r.asignado_a).map(r => r.asignado_a))];
+        if (assignedIds.length > 0) {
+            try {
+                const { data: techs } = await supabase.from('usuarios').select('id, nombre, apellido, avatar_url').in('id', assignedIds);
+                const map = (techs || []).reduce((acc, t) => { acc[t.id] = t; return acc; }, {});
+                rows.forEach(r => { r.asignado = r.asignado_a ? map[r.asignado_a] || null : null; });
+            } catch (e) {
+                console.warn('Could not fetch assigned users for listUserReports:', e.message || e);
+            }
+        }
+
+        res.json(rows);
     } catch (err) {
         console.error('Error listando reportes:', err);
         res.status(500).json({ error: 'No se pudieron obtener los reportes' });
+    }
+};
+
+exports.listAllReports = async (req, res) => {
+    try {
+        const { data, error } = await SupportModel.getAll();
+        if (error) throw error;
+        const rows = data || [];
+        const assignedIds = [...new Set(rows.filter(r => r.asignado_a).map(r => r.asignado_a))];
+        if (assignedIds.length > 0) {
+            try {
+                const { data: techs } = await supabase.from('usuarios').select('id, nombre, apellido, avatar_url').in('id', assignedIds);
+                const map = (techs || []).reduce((acc, t) => { acc[t.id] = t; return acc; }, {});
+                rows.forEach(r => { r.asignado = r.asignado_a ? map[r.asignado_a] || null : null; });
+            } catch (e) {
+                console.warn('Could not fetch assigned users for listAllReports:', e.message || e);
+            }
+        }
+
+        res.json(rows);
+    } catch (err) {
+        console.error('Error listando todos los reportes:', err);
+        res.status(500).json({ error: 'No se pudieron obtener los reportes' });
+    }
+};
+
+exports.updateReport = async (req, res) => {
+    try {
+        const usuario = req.user || req.session?.user;
+        if (!usuario) return res.status(401).json({ error: 'No autorizado' });
+
+        const id = req.params.id;
+        const allowedStates = ['abierto', 'en_progreso', 'cerrado'];
+        const patch = {};
+
+        if (req.body.estado !== undefined) {
+            if (!allowedStates.includes(req.body.estado)) {
+                return res.status(400).json({ error: 'Estado inválido' });
+            }
+            patch.estado = req.body.estado;
+        }
+
+        if (req.body.asignado_a !== undefined) {
+            const asignadoId = Number(req.body.asignado_a);
+            if (!Number.isInteger(asignadoId) || asignadoId <= 0) {
+                return res.status(400).json({ error: 'ID de técnico inválido' });
+            }
+           
+            try {
+                const { data: tech, error: techErr } = await supabase
+                    .from('usuarios')
+                    .select('id, is_support')
+                    .eq('id', asignadoId)
+                    .single();
+                if (techErr || !tech) {
+                    return res.status(400).json({ error: 'Técnico no encontrado' });
+                }
+                if (!tech.is_support) {
+                    return res.status(400).json({ error: 'Usuario no es técnico' });
+                }
+            } catch (verErr) {
+                console.error('Error verificando técnico:', verErr);
+                return res.status(500).json({ error: 'Error al verificar técnico' });
+            }
+            patch.asignado_a = asignadoId;
+        }
+
+        if (Object.keys(patch).length === 0) return res.status(400).json({ error: 'Nada para actualizar' });
+
+        const { data, error } = await SupportModel.updateStatus(id, patch);
+        if (error) throw error;
+
+        res.json({ message: 'Reporte actualizado', report: data });
+    } catch (err) {
+        console.error('Error actualizando reporte:', err);
+        res.status(500).json({ error: 'No se pudo actualizar el reporte' });
+    }
+};
+
+exports.getReport = async (req, res) => {
+    try {
+        const usuario = req.user || req.session?.user;
+        if (!usuario) return res.status(401).json({ error: 'No autorizado' });
+
+        const id = req.params.id;
+        const { data, error } = await SupportModel.getById(id);
+        if (error || !data) return res.status(404).json({ error: 'Reporte no encontrado' });
+
+ 
+        let reporter = null;
+        try {
+            const { data: udata, error: uerr } = await supabase
+                .from('usuarios')
+                .select('id, nombre, apellido, email')
+                .eq('id', data.usuario_id)
+                .single();
+            if (!uerr && udata) reporter = udata;
+        } catch (ue) {
+            console.warn('Could not fetch reporter info:', ue.message);
+        }
+
+      
+        let assigned = null;
+        try {
+            if (data.asignado_a) {
+                const { data: auser, error: aerr } = await supabase.from('usuarios').select('id, nombre, apellido, avatar_url').eq('id', data.asignado_a).single();
+                if (!aerr && auser) assigned = auser;
+            }
+        } catch (ae) {
+            console.warn('Could not fetch assigned user for report:', ae.message || ae);
+        }
+
+        res.json(Object.assign({}, data, { reporter, asignado: assigned }));
+    } catch (err) {
+        console.error('Error obteniendo reporte:', err);
+        res.status(500).json({ error: 'No se pudo obtener el reporte' });
+    }
+};
+
+exports.listTechnicians = async (req, res) => {
+    try {
+        const { data, error } = await supabase
+            .from('usuarios')
+            .select('id, nombre, apellido, email')
+            .eq('is_support', true);
+        if (error) throw error;
+        res.json(data || []);
+    } catch (err) {
+        console.error('Error listando tecnicos:', err);
+        res.status(500).json({ error: 'No se pudieron obtener los técnicos' });
     }
 };

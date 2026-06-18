@@ -22,7 +22,7 @@ function openRubricModal(context = null, taskId = null, claseId = null) {
     window.rubricModalTaskId = taskId;
     window.rubricModalClaseId = claseId;
     
-    if (context === 'assignment' && claseId) {
+    if (claseId) {
         loadRubricsByClass(claseId);
     } else {
         loadAllRubrics();
@@ -44,16 +44,27 @@ async function loadRubricsByClass(claseId) {
 }
 
 async function refreshRubricViews() {
-    if (window.rubricModalClaseId) {
-        await loadRubricsByClass(window.rubricModalClaseId);
+    const claseToUse = window.rubricModalClaseId || window.claseId || null;
+    if (claseToUse) {
+        await loadRubricsByClass(claseToUse);
     } else {
         await loadAllRubrics();
     }
-    if (window.rubricModalContext === 'assignment' && window.rubricModalClaseId) {
-        loadRubricsForAssignment(window.rubricModalClaseId);
+    if (window.rubricModalContext === 'assignment' && claseToUse) {
+        loadRubricsForAssignment(claseToUse);
     }
 }
 
+
+function escapeHtml(value) {
+    if (value === undefined || value === null) return '';
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
 
 function displayRubrics(rubrics) {
     const tbody = document.getElementById('rubricsTableBody');
@@ -64,25 +75,56 @@ function displayRubrics(rubrics) {
         return;
     }
 
-    tbody.innerHTML = rubrics.map(r => `
+    tbody.innerHTML = rubrics.map(r => {
+        const criterio = r.criterio || '';
+        const descripcion = r.descripcion || '';
+        return `
         <tr>
-            <td><strong>${r.criterio}</strong></td>
-            <td>${r.descripcion || '-'}</td>
+            <td><strong>${escapeHtml(criterio)}</strong></td>
+            <td>${escapeHtml(descripcion) || '-'}</td>
             <td class="text-center">${r.puntos_maximos}</td>
             <td class="text-center">
-                <button class="menu-button-sm" onclick="editRubric('${r.id}', '${r.criterio.replace(/'/g, "\\'")}', '${(r.descripcion || '').replace(/'/g, "\\'")}', ${r.puntos_maximos})">
+                <button type="button" class="menu-button-sm edit-rubric-btn"
+                    data-rubric-id="${escapeHtml(r.id)}"
+                    data-rubric-criterio="${escapeHtml(criterio)}"
+                    data-rubric-descripcion="${escapeHtml(descripcion)}"
+                    data-rubric-puntos="${r.puntos_maximos}">
                     <i class="fa-solid fa-pen"></i> Editar
                 </button>
-                <button class="menu-button-sm" onclick="deleteRubric('${r.id}', '${r.criterio}')">
+                <button type="button" class="menu-button-sm delete-rubric-btn"
+                    data-rubric-id="${escapeHtml(r.id)}"
+                    data-rubric-criterio="${escapeHtml(criterio)}">
                     <i class="fa-solid fa-trash"></i> Eliminar
                 </button>
             </td>
         </tr>
-    `).join('');
+    `;
+    }).join('');
+
+    attachRubricRowListeners();
+}
+
+function attachRubricRowListeners() {
+    document.querySelectorAll('.edit-rubric-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            editRubric(
+                btn.dataset.rubricId,
+                btn.dataset.rubricCriterio,
+                btn.dataset.rubricDescripcion,
+                Number(btn.dataset.rubricPuntos)
+            );
+        });
+    });
+
+    document.querySelectorAll('.delete-rubric-btn').forEach(btn => {
+        btn.addEventListener('click', function () {
+            deleteRubric(btn.dataset.rubricId, btn.dataset.rubricCriterio);
+        });
+    });
 }
 
 
-async function createNewRubric() {
+async function createNewRubric(btn) {
     const criterio = document.getElementById('newRubricCriterio')?.value;
     const descripcion = document.getElementById('newRubricDescripcion')?.value || '';
     const puntos_maximos = document.getElementById('newRubricPuntos')?.value;
@@ -91,6 +133,9 @@ async function createNewRubric() {
     if (!validateNotEmpty(puntos_maximos, 'Los puntos máximos')) return;
     if (!validateRange(puntos_maximos, 1, 100, 'Los puntos máximos')) return;
 
+    const btnEl = btn || getPrimaryButtonInModal('rubricModal');
+    setButtonLoading(btnEl, true, 'Creando...');
+    showLoading('Creando rúbrica', 'Por favor espere...');
     try {
         const payload = {
             criterio,
@@ -132,11 +177,15 @@ async function createNewRubric() {
     } catch (err) {
         console.error('Error:', err);
         showError('Error', err.message);
+    } finally {
+        setButtonLoading(btnEl, false);
+        try { Swal.close(); } catch (e) {}
     }
 }
 
 
 function editRubric(id, criterio, descripcion, puntos) {
+    window.rubricModalClaseId = window.claseId || window.rubricModalClaseId || null;
     document.getElementById('editRubricId').value = id;
     document.getElementById('editRubricCriterio').value = criterio;
     document.getElementById('editRubricDescripcion').value = descripcion;
@@ -186,8 +235,16 @@ async function saveRubricChanges() {
 
 
 async function deleteRubric(id, criterio) {
-    if (!confirm(`¿Estás seguro de que deseas eliminar la rúbrica "${criterio}"?`)) return;
+    const result = await showConfirm(
+        'Eliminar rúbrica?',
+        '¿Estás seguro de que deseas eliminar la rúbrica "' + criterio + '"?',
+        'Sí, eliminar',
+        'Cancelar'
+    );
 
+    if (!result.isConfirmed) return;
+
+    showLoading('Eliminando rúbrica', 'Por favor espere...');
     try {
         const response = await fetch(`/api/rubrics/${id}`, {
             method: 'DELETE',
@@ -195,8 +252,8 @@ async function deleteRubric(id, criterio) {
         });
 
         if (!response.ok) {
-            const data = await response.json();
-            throw new Error(data.error || 'Error al eliminar');
+            const data = await response.json().catch(() => null);
+            throw new Error(data?.error || 'Error al eliminar');
         }
 
         await showSuccess('Rúbrica eliminada', 'Se eliminó correctamente');
