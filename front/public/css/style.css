@@ -29,11 +29,6 @@ body {
   min-height: 100vh;
 }
 
-img {
-  max-width: 25%;
-  height: auto;
-}
-
 a {
   color: var(--primary);
   text-decoration: none;

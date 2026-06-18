@@ -33,7 +33,7 @@
                     <div class="dropdown">
                         <button class="btn avatar-circle" data-bs-toggle="dropdown">
                             <% if (user && user.avatar_url) { %>
-                                <img src="<%= user.avatar_url %>" alt="Avatar" class="avatar-image">
+                                <img style="width: 100%; height: auto;" src="<%= user.avatar_url %>" alt="Avatar" class="avatar-image">
                             <% } else { %>
                                 <span class="avatar-fallback"><%= user && user.nombre ? user.nombre.charAt(0).toUpperCase() : '?' %></span>
                             <% } %>
