@@ -12,7 +12,7 @@
     <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom sticky-top">
         <div class="container">
             <a class="navbar-brand d-flex align-items-center me-2" href="/">
-                <img style="width: 100%; height: auto;" src="/public/img/maxgradeplacapng.png" alt="MaxGrade" class="navbar-logo">
+                <img style="width: 25%; height: auto;" src="/public/img/maxgradeplacapng.png" alt="MaxGrade" class="navbar-logo">
             </a>
             <span class="navbar-brand fw-bold"><i class="fa-solid fa-user me-2" style="color: #4c63ff;"></i>Mi Perfil</span>
             <a class="btn btn-light me-2" href="/dashboard"><i class="fa-solid fa-arrow-left"></i> Volver</a>
@@ -30,17 +30,15 @@
                             <img src="<%= user.avatar_url || '/public/img/default-avatar.png' %>" 
                                  id="profileImage"
                                  class="rounded-circle border border-5 border-white shadow" 
-                                 style="width: 350px; height: 100px; object-fit: cover;">
+                                 style="width: 140px; height: 140px; object-fit: cover;">
                             <label for="avatarInput" class="btn btn-sm btn-primary rounded-circle position-absolute bottom-0 end-0">
                                 <i class="fa-solid fa-camera"></i>
                                 <input type="file" id="avatarInput" hidden accept="image/*" onchange="updateAvatar()">
                             </label>
                             <% if (user.avatar_url) { %>
-                                <button class="btn btn-sm btn-danger rounded-circle position-absolute bottom-0 start-0" 
-                                        onclick="deleteAvatar()" 
-                                        title="Eliminar foto de perfil">
+                                <label onclick="deleteAvatar()" class="btn btn-sm btn-danger rounded-circle position-absolute bottom-0 start-0">
                                     <i class="fa-solid fa-trash"></i>
-                                </button>
+                                </label>
                             <% } %>
                         </div>
 
