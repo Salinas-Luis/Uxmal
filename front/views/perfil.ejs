@@ -15,28 +15,28 @@
                 <img src="/public/img/maxgradeplacapng.png" alt="MaxGrade" class="navbar-logo">
             </a>
             <a class="btn btn-light me-2" href="/dashboard"><i class="fa-solid fa-arrow-left"></i> Volver</a>
-            <span class="navbar-brand fw-bold">Configuración de Perfil</span>
+            <span class="navbar-brand fw-bold"><i class="fa-solid fa-user me-2" style="color: #4c63ff;"></i>Mi Perfil</span>
         </div>
     </nav>
 
-    <main class="container mt-5">
+    <main class="container mt-5 mb-5">
         <div class="row justify-content-center">
             <div class="col-md-8 col-lg-6">
-                <div class="card shadow-sm border-0 overflow-hidden">
-                    <div class="bg-primary" style="height: 100px;"></div>
+                <div class="card shadow border-0 overflow-hidden rounded-4">
+                    <div style="height: 120px; background: linear-gradient(135deg, #4c63ff 0%, #3c4ed2 100%);"></div>
                     
-                    <div class="card-body text-center" style="margin-top: -50px;">
-                        <div class="position-relative d-inline-block mb-3">
+                    <div class="card-body text-center" style="margin-top: -60px;">
+                        <div class="position-relative d-inline-block mb-4">
                             <img src="<%= user.avatar_url || '/public/img/default-avatar.png' %>" 
                                  id="profileImage"
-                                 class="rounded-circle border border-4 border-white shadow-sm" 
-                                 style="width: 120px; height: 120px; object-fit: cover;">
-                            <label for="avatarInput" class="btn btn-sm btn-dark rounded-circle position-absolute bottom-0 end-0">
+                                 class="rounded-circle border border-5 border-white shadow" 
+                                 style="width: 140px; height: 140px; object-fit: cover;">
+                            <label for="avatarInput" class="btn btn-sm btn-primary rounded-circle position-absolute bottom-0 end-0">
                                 <i class="fa-solid fa-camera"></i>
                                 <input type="file" id="avatarInput" hidden accept="image/*" onchange="updateAvatar()">
                             </label>
                             <% if (user.avatar_url) { %>
-                                <button class="btn btn-sm btn-outline-danger rounded-circle position-absolute bottom-0 start-0" 
+                                <button class="btn btn-sm btn-danger rounded-circle position-absolute bottom-0 start-0" 
                                         onclick="deleteAvatar()" 
                                         title="Eliminar foto de perfil">
                                     <i class="fa-solid fa-trash"></i>
@@ -44,24 +44,27 @@
                             <% } %>
                         </div>
 
-                        <h3 class="fw-bold mb-0"><%= user.nombre %> <%= user.apellido %></h3>
-                        <p class="text-muted"><%= user.email %></p>
+                        <h3 class="fw-bold mb-1"><%= user.nombre %> <%= user.apellido %></h3>
+                        <p class="text-muted d-flex align-items-center justify-content-center gap-2"><i class="fa-solid fa-envelope"></i><%= user.email %></p>
                         
                         <hr class="my-4">
 
                         <div class="text-start">
-                            <h6 class="fw-bold mb-3">Detalles de la cuenta</h6>
+                            <div class="d-flex align-items-center gap-2 mb-4">
+                                <i class="fa-solid fa-id-card fs-5" style="color: #4c63ff;"></i>
+                                <h6 class="fw-bold mb-0">Información de la cuenta</h6>
+                            </div>
                             <form id="profileForm">
                                 <div class="mb-3">
-                                    <label class="small text-muted">Nombre</label>
+                                    <label class="form-label fw-bold"><i class="fa-solid fa-user me-2" style="color: #4c63ff;"></i>Nombre</label>
                                     <input type="text" class="form-control" id="nombre" name="nombre" value="<%= user.nombre %>" required>
                                 </div>
                                 <div class="mb-3">
-                                    <label class="small text-muted">Apellido</label>
+                                    <label class="form-label fw-bold"><i class="fa-solid fa-user me-2" style="color: #4c63ff;"></i>Apellido</label>
                                     <input type="text" class="form-control" id="apellido" name="apellido" value="<%= user.apellido %>" required>
                                 </div>
-                                <div class="mb-3">
-                                    <label class="small text-muted">Correo electrónico</label>
+                                <div class="mb-4">
+                                    <label class="form-label fw-bold"><i class="fa-solid fa-envelope me-2" style="color: #4c63ff;"></i>Correo electrónico</label>
                                     <input type="email" class="form-control" id="email" name="email" value="<%= user.email %>" required>
                                 </div>
                                 <div class="d-grid gap-2">
@@ -75,9 +78,13 @@
                         <hr class="my-4">
 
                         <div class="text-start">
-                            <h6 class="fw-bold mb-3 text-danger">Acciones permanentes</h6>
+                            <div class="d-flex align-items-center gap-2 mb-3">
+                                <i class="fa-solid fa-triangle-exclamation fs-5 text-danger"></i>
+                                <h6 class="fw-bold mb-0">Acciones permanentes</h6>
+                            </div>
+                            <p class="small text-muted mb-3">Estas acciones no se pueden deshacer.</p>
                             <div class="d-grid gap-2">
-                                <button class="btn btn-danger" onclick="deleteAccount()">
+                                <button class="btn btn-outline-danger" onclick="deleteAccount()">
                                     <i class="fa-solid fa-trash me-2"></i> Eliminar cuenta
                                 </button>
                             </div>

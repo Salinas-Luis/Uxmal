@@ -61,7 +61,8 @@ exports.createReport = async (req, res) => {
         res.status(201).json({ message: 'Reporte de soporte enviado correctamente', ticket: data[0] });
     } catch (err) {
         console.error('Error en supportController.createReport:', err);
-        res.status(500).json({ error: 'No se pudo crear el reporte de soporte' });
+        const errorMessage = err.message || err.details || 'No se pudo crear el reporte de soporte';
+        res.status(500).json({ error: errorMessage });
     }
 };
 

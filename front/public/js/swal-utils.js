@@ -10,7 +10,13 @@ function showError(title = 'Error', message = 'Ha ocurrido un error') {
         title: title,
         text: message,
         confirmButtonColor: '#dc3545',
-        confirmButtonText: 'Aceptar'
+        confirmButtonText: 'Aceptar',
+        timer: 8000,
+        timerProgressBar: true,
+        didOpen: (modal) => {
+         
+            modal.dataset.isError = 'true';
+        }
     });
 }
 
@@ -41,7 +47,9 @@ function showWarning(title = 'Advertencia', message = 'Por favor, verifica tu in
         title: title,
         text: message,
         confirmButtonColor: '#ffc107',
-        confirmButtonText: 'Aceptar'
+        confirmButtonText: 'Aceptar',
+        timer: 6000,
+        timerProgressBar: true
     });
 }
 
@@ -56,7 +64,9 @@ function showInfo(title = 'Información', message = 'Información importante') {
         title: title,
         text: message,
         confirmButtonColor: '#17a2b8',
-        confirmButtonText: 'Aceptar'
+        confirmButtonText: 'Aceptar',
+        timer: 5000,
+        timerProgressBar: true
     });
 }
 
@@ -363,6 +373,6 @@ async function transcribeAudioFileToField(fieldId, fileInputId, bucket = 'anunci
     } catch (err) {
         showError('Error al transcribir', err.message || 'No se pudo transcribir el audio.');
     } finally {
-        Swal.close();
+        // Loading modal is replaced by success/error alerts automatically
     }
 }

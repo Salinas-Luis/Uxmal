@@ -59,7 +59,17 @@ exports.createUnit = async (req, res) => {
         });
     } catch (err) {
         console.error("Error al crear unidad:", err);
-        res.status(500).json({ error: "No se pudo crear la unidad" });
+        
+        // Handle Supabase unique constraint violation
+        if (err.code === '23505') {
+            return res.status(400).json({ 
+                error: "Ya existe una unidad con ese número en esta clase" 
+            });
+        }
+        
+        // Return specific error message if available
+        const errorMessage = err.message || err.details || "No se pudo crear la unidad";
+        res.status(500).json({ error: errorMessage });
     }
 };
 

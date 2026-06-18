@@ -179,7 +179,6 @@ async function createNewRubric(btn) {
         showError('Error', err.message);
     } finally {
         setButtonLoading(btnEl, false);
-        try { Swal.close(); } catch (e) {}
     }
 }
 

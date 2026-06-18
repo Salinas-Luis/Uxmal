@@ -64,7 +64,6 @@ async function publishAssignment(claseId, btn) {
         showError('Error de conexión', 'No se pudo conectar con el servidor');
     } finally {
         setButtonLoading(btnEl, false);
-        try { Swal.close(); } catch (e) {}
     }
 }
 
@@ -171,7 +170,6 @@ async function createUnit(claseId, btn) {
         showError('Error de conexión', 'No se pudo conectar con el servidor');
     } finally {
         setButtonLoading(btnEl, false);
-        try { Swal.close(); } catch (e) {}
     }
 }
 

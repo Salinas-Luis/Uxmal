@@ -38,7 +38,6 @@ async function createPost(claseId, btn) {
         showError('Error de conexión', 'No se pudo conectar con el servidor');
     } finally {
         setButtonLoading(btnEl, false);
-        try { Swal.close(); } catch (e) {}
     }
 }
 
@@ -451,7 +450,7 @@ async function uploadClassBanner(classId, event) {
     } catch (error) {
         showError('Error de conexión', 'No se pudo conectar con el servidor');
     } finally {
-        try { Swal.close(); } catch (e) {}
+        // Loading modal is closed by success/error alerts automatically
     }
 }
 

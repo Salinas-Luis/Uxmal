@@ -136,21 +136,26 @@
             </div>
         </div>
         <div class="collapse mb-4" id="announcementForm">
-            <div class="card card-body bg-white shadow-sm">
+            <div class="card card-body bg-white shadow-sm rounded-4 border-0">
+                <div class="d-flex align-items-center gap-2 mb-4 pb-3 border-bottom">
+                    <i class="fa-solid fa-bullhorn fs-5" style="color: #4c63ff;"></i>
+                    <h6 class="fw-bold mb-0">Crear anuncio</h6>
+                </div>
                 <div class="mb-3">
-                    <h6 class="fw-bold mb-2">Crear anuncio</h6>
-                    <textarea id="postContent" class="form-control mb-3" rows="3" maxlength="500" placeholder="Escribe tu anuncio aquí..."></textarea>
-                    <div class="mb-3">
-                        <label for="postFile" class="form-label">Adjuntar archivo (opcional)</label>
-                        <input type="file" id="postFile" class="form-control" accept="image/*,audio/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
-                        <div class="mt-2 d-flex gap-2">
-                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="startVoiceDictation('postContent', this)">Dictar comentario</button>
-                        </div>
+                    <label class="form-label fw-bold"><i class="fa-solid fa-pen-to-square me-2" style="color: #4c63ff;"></i>Contenido</label>
+                    <textarea id="postContent" class="form-control" rows="4" maxlength="500" placeholder="Escribe tu anuncio aquí..." required></textarea>
+                    <small class="text-muted">Máximo 500 caracteres</small>
+                </div>
+                <div class="mb-3">
+                    <label for="postFile" class="form-label fw-bold"><i class="fa-solid fa-paperclip me-2" style="color: #4c63ff;"></i>Adjuntar archivo (opcional)</label>
+                    <input type="file" id="postFile" class="form-control" accept="image/*,audio/*,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
+                    <div class="mt-2 d-flex gap-2">
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="startVoiceDictation('postContent', this)"><i class="fa-solid fa-microphone me-2"></i>Dictar</button>
                     </div>
                 </div>
-                <div class="d-flex justify-content-end gap-2">
-                    <button class="btn btn-secondary btn-sm" data-bs-toggle="collapse" data-bs-target="#announcementForm">Cancelar</button>
-                    <button class="btn btn-primary btn-sm" onclick="createPost('<%= clase.id %>', this)">Publicar anuncio</button>
+                <div class="d-flex justify-content-end gap-2 pt-2 border-top">
+                    <button class="btn btn-light" data-bs-toggle="collapse" data-bs-target="#announcementForm">Cancelar</button>
+                    <button class="btn btn-primary px-4" onclick="createPost('<%= clase.id %>', this)"><i class="fa-solid fa-check me-2"></i>Publicar</button>
                 </div>
             </div>
         </div>
