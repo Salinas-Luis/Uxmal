@@ -1,7 +1,53 @@
+// temporary object URLs for local previews; revoked on modal close
+const tempObjectUrls = [];
+
 document.addEventListener('change', function(e) {
     if (e.target && e.target.id === 'submissionFile') {
         const fileName = e.target.files[0]?.name || "";
         document.getElementById('fileNameDisplay').textContent = fileName;
+        // render a preview for images / pdfs
+        const previewContainer = document.getElementById('submissionPreview');
+        if (previewContainer) {
+            // clear previous preview
+            previewContainer.innerHTML = '';
+            const file = e.target.files[0];
+            if (file) {
+                const url = URL.createObjectURL(file);
+                // keep track to revoke later when modal closes
+                tempObjectUrls.push(url);
+                if (file.type.startsWith('image/')) {
+                    const img = document.createElement('img');
+                    img.src = url;
+                    img.className = 'preview-img rounded';
+                    img.style.maxHeight = '80vh';
+                    img.style.cursor = 'pointer';
+                    img.addEventListener('click', () => openSubmissionPreview(url));
+                    previewContainer.appendChild(img);
+                } else if (file.name && /\.pdf$/i.test(file.name)) {
+                    const embed = document.createElement('iframe');
+                    embed.src = url;
+                    embed.className = 'preview-embed';
+                    embed.style.pointerEvents = 'none';
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'position-relative';
+                    wrapper.appendChild(embed);
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'btn btn-sm btn-outline-primary position-absolute';
+                    btn.style.top = '8px';
+                    btn.style.right = '8px';
+                    btn.textContent = 'Abrir vista previa';
+                    btn.addEventListener('click', () => openSubmissionPreview(url));
+                    wrapper.appendChild(btn);
+                    previewContainer.appendChild(wrapper);
+                } else {
+                    const p = document.createElement('div');
+                    p.className = 'small text-muted';
+                    p.textContent = file.name;
+                    previewContainer.appendChild(p);
+                }
+            }
+        }
     }
 });
 
@@ -11,11 +57,12 @@ document.addEventListener('submit', function(e) {
     }
 });
 
-async function submitTask(tareaId) {
+async function submitTask(tareaId, btn) {
     const fileInput = document.getElementById('submissionFile');
     const comentario = document.getElementById('comentarioAlumno')?.value.trim() || '';
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     const estudianteId = user.id;
+    const btnEl = btn || document.querySelector('button[onclick*="submitTask("]') || null;
 
     console.log('submitTask invoked', { tareaId, fileName: fileInput?.files[0]?.name, comentario, estudianteId });
 
@@ -27,17 +74,18 @@ async function submitTask(tareaId) {
             'Cancelar'
         ).then(result => {
             if (!result.isConfirmed) return;
-            submitTaskWithoutFile(tareaId, comentario, estudianteId);
+            submitTaskWithoutFile(tareaId, comentario, estudianteId, null, btnEl);
         });
         return;
     }
 
     if (!validateFileSize(fileInput.files[0], 20)) return;
 
-    submitTaskWithoutFile(tareaId, comentario, user.id, fileInput.files[0]);
+    submitTaskWithoutFile(tareaId, comentario, user.id, fileInput.files[0], btnEl);
 }
 
-async function submitTaskWithoutFile(tareaId, comentario, estudianteId, archivo = null) {
+async function submitTaskWithoutFile(tareaId, comentario, estudianteId, archivo = null, btnEl = null) {
+    setButtonLoading(btnEl, true, 'Entregando...');
     showLoading('Entregando tarea', 'Por favor espere...');
 
     const formData = new FormData();
@@ -66,6 +114,8 @@ async function submitTaskWithoutFile(tareaId, comentario, estudianteId, archivo 
         }
     } catch (error) {
         showError('Error de conexión', 'No se pudo conectar con el servidor');
+    } finally {
+        setButtonLoading(btnEl, false);
     }
 }
 
@@ -75,6 +125,47 @@ function refreshSubmissionView() {
     } else {
         location.reload();
     }
+}
+
+// Helper to open a preview for existing submission URLs (images / pdfs)
+function openSubmissionPreview(url) {
+    if (!url) return;
+    const isImage = url.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+    const isPdf = url.match(/\.pdf$/i);
+
+    const revokeIfTemp = (u) => {
+        const idx = tempObjectUrls.indexOf(u);
+        if (idx !== -1) {
+            try { URL.revokeObjectURL(u); } catch (e) {}
+            tempObjectUrls.splice(idx, 1);
+        }
+    };
+
+    if (isImage) {
+        Swal.fire({
+            imageUrl: url,
+            imageAlt: 'Vista previa',
+            showConfirmButton: true,
+            confirmButtonText: 'Cerrar',
+            width: '90%',
+            didClose: () => revokeIfTemp(url)
+        });
+        return;
+    }
+
+    if (isPdf) {
+        Swal.fire({
+            html: `<iframe src="${url}" style="width:100%;height:80vh;border:0;" aria-label="Vista previa PDF"></iframe>`,
+            showConfirmButton: true,
+            confirmButtonText: 'Cerrar',
+            width: '95%',
+            didClose: () => revokeIfTemp(url)
+        });
+        return;
+    }
+
+    // default: open in new tab
+    window.open(url, '_blank');
 }
 
 async function cancelSubmission(entregaId) {
@@ -104,4 +195,44 @@ async function cancelSubmission(entregaId) {
             showError('Error de conexión', 'No se pudo conectar con el servidor');
         }
     });
+}
+
+function renderInlinePreview(containerId, url) {
+    const container = document.getElementById(containerId);
+    if (!container || !url) return;
+    container.innerHTML = '';
+    if (url.match(/\.(jpg|jpeg|png|gif|webp)$/i)) {
+        const img = document.createElement('img');
+        img.src = url;
+        img.className = 'preview-img rounded';
+        img.style.maxHeight = '80vh';
+        img.style.cursor = 'pointer';
+        img.addEventListener('click', () => openSubmissionPreview(url));
+        container.appendChild(img);
+    } else if (url.match(/\.pdf$/i)) {
+        const iframe = document.createElement('iframe');
+        iframe.src = url;
+        iframe.className = 'preview-embed';
+        iframe.setAttribute('aria-label', 'Vista previa PDF');
+        const wrapper = document.createElement('div');
+        wrapper.className = 'position-relative';
+        iframe.style.pointerEvents = 'none';
+        wrapper.appendChild(iframe);
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn btn-sm btn-outline-primary position-absolute';
+        btn.style.top = '8px';
+        btn.style.right = '8px';
+        btn.textContent = 'Abrir vista previa';
+        btn.addEventListener('click', () => openSubmissionPreview(url));
+        wrapper.appendChild(btn);
+        container.appendChild(wrapper);
+    } else {
+        const a = document.createElement('a');
+        a.href = url;
+        a.target = '_blank';
+        a.className = 'btn btn-sm btn-outline-primary';
+        a.textContent = 'Descargar archivo';
+        container.appendChild(a);
+    }
 }

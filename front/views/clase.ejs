@@ -40,7 +40,7 @@
                             <% } %>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="/perfil"><i class="fa-solid fa-user me-2"></i>Perfil</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="window.location.href='/perfil?returnTo='+encodeURIComponent(window.location.pathname); return false;"><i class="fa-solid fa-user me-2"></i>Perfil</a></li>
                         </ul>
                     </div>
                 </div>
@@ -716,6 +716,7 @@
         });
     </script>
     <script src="/public/js/entrega.js"></script>
+    <script src="/public/js/faq.js"></script>
     <%- include('modals/assigmentModal') %>
     <%- include('modals/classModals') %>
     <%- include('modals/supportModal') %>

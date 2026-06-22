@@ -39,7 +39,7 @@
                             <% } %>
                         </button>
                         <ul class="dropdown-menu dropdown-menu-end">
-                            <li><a class="dropdown-item" href="/perfil"><i class="fa-solid fa-user me-2"></i>Perfil</a></li>
+                            <li><a class="dropdown-item" href="#" onclick="window.location.href='/perfil?returnTo='+encodeURIComponent(window.location.pathname); return false;"><i class="fa-solid fa-user me-2"></i>Perfil</a></li>
                         </ul>
                     </div>
                 </div>
@@ -178,5 +178,6 @@
     <script src="/public/js/swal-utils.js"></script>
     <script src="/public/js/dashboard.js"></script>
     <script src="/public/js/support.js"></script>
+    <script src="/public/js/faq.js"></script>
 </body>
 </html>
